@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>VDL Distribuidora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+/* ── Variables ──────────────────────────────────────── */
+:root {
+  --azul:       #1E40AF;
+  --azul-osc:   #1E3A5F;
+  --azul-claro: #EFF6FF;
+  --azul-med:   #DBEAFE;
+  --verde:      #166534;
+  --verde-bg:   #DCFCE7;
+  --rojo:       #991B1B;
+  --rojo-bg:    #FEE2E2;
+  --amber:      #854D0E;
+  --amber-bg:   #FEF9C3;
+  --gris-1:     #F8FAFC;
+  --gris-2:     #F1F5F9;
+  --gris-3:     #E2E8F0;
+  --gris-4:     #CBD5E1;
+  --gris-5:     #94A3B8;
+  --gris-6:     #64748B;
+  --texto:      #1E293B;
+  --radio:      12px;
+  --radio-sm:   8px;
+  --sombra:     0 2px 12px rgba(0,0,0,0.06);
+  --font:       'DM Sans', system-ui, sans-serif;
+  --font-mono:  'DM Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--gris-1); }
+body { font-family: var(--font); font-size: 14px; color: var(--texto); }
+
+/* ── Layout ─────────────────────────────────────────── */
+#app { height: 100%; display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; background: #fff; position: relative; overflow: hidden; }
+.screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+.screen.active { display: flex; }
+.topbar { background: var(--azul-osc); color: #fff; padding: 12px 16px 14px; flex-shrink: 0; }
+.topbar h1 { font-size: 17px; font-weight: 700; }
+.topbar p  { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+.topbar-row { display: flex; align-items: center; gap: 10px; }
+.topbar-row .back { background: none; border: none; color: #fff; cursor: pointer; padding: 0; display: flex; align-items: center; }
+.topbar-row .back i { font-size: 22px; }
+.scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px; background: var(--gris-1); }
+.navbar { display: flex; background: #fff; border-top: 1px solid var(--gris-3); flex-shrink: 0; }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 4px 8px; background: none; border: none; color: var(--gris-5); font-size: 10px; font-weight: 600; cursor: pointer; font-family: var(--font); }
+.nav-btn i { font-size: 22px; }
+.nav-btn.active { color: var(--azul-osc); }
+
+/* ── Componentes base ───────────────────────────────── */
+.card { background: #fff; border-radius: var(--radio); border: 1px solid var(--gris-3); padding: 14px; margin-bottom: 12px; box-shadow: var(--sombra); }
+.card-title { font-size: 13px; font-weight: 700; color: var(--texto); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.btn { width: 100%; padding: 13px; border-radius: var(--radio); border: none; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--font); margin-bottom: 10px; transition: opacity .15s, transform .1s; }
+.btn:active { opacity: .85; transform: scale(.98); }
+.btn:last-child { margin-bottom: 0; }
+.btn-primary   { background: var(--azul-osc); color: #fff; }
+.btn-secondary { background: var(--azul-claro); color: var(--azul-osc); }
+.btn-success   { background: var(--verde-bg); color: var(--verde); }
+.btn-danger    { background: var(--rojo-bg); color: var(--rojo); }
+.btn-wa        { background: #25D366; color: #fff; }
+.btn-print     { background: var(--texto); color: #fff; }
+.btn-sm { padding: 8px 14px; width: auto; font-size: 12px; border-radius: var(--radio-sm); margin-bottom: 0; }
+.badge { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 700; display: inline-block; }
+.b-ok     { background: var(--verde-bg); color: var(--verde); }
+.b-pend   { background: var(--amber-bg); color: var(--amber); }
+.b-peligro{ background: var(--rojo-bg); color: var(--rojo); }
+.b-azul   { background: var(--azul-med); color: var(--azul); }
+.b-cc     { background: #EDE9FE; color: #5B21B6; }
+.b-ef     { background: var(--verde-bg); color: var(--verde); }
+.b-tr     { background: var(--azul-med); color: var(--azul); }
+label.lbl { font-size: 12px; font-weight: 600; color: var(--gris-6); display: block; margin-bottom: 5px; }
+input[type=text], input[type=password], input[type=number], input[type=tel], select, textarea {
+  width: 100%; padding: 11px 13px; border: 1px solid var(--gris-4); border-radius: var(--radio-sm);
+  font-size: 14px; color: var(--texto); background: #fff; font-family: var(--font);
+  outline: none; margin-bottom: 12px; appearance: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--azul); }
+.field { margin-bottom: 4px; }
+.list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--gris-2); cursor: pointer; }
+.list-item:last-child { border-bottom: none; }
+.li-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.li-right { text-align: right; flex-shrink: 0; margin-left: 10px; }
+.li-name { font-size: 13px; font-weight: 600; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li-sub  { font-size: 11px; color: var(--gris-5); margin-top: 1px; }
+.li-price { font-size: 13px; font-weight: 700; color: var(--texto); }
+.avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.av-az  { background: var(--azul-med); color: var(--azul); }
+.av-gr  { background: var(--verde-bg); color: var(--verde); }
+.av-am  { background: var(--amber-bg); color: var(--amber); }
+.av-ro  { background: var(--rojo-bg); color: var(--rojo); }
+.search-box { display: flex; align-items: center; background: #fff; border: 1px solid var(--gris-4); border-radius: var(--radio); padding: 9px 13px; gap: 8px; margin-bottom: 12px; }
+.search-box i { color: var(--gris-5); font-size: 16px; }
+.search-box input { border: none; outline: none; font-size: 13px; color: var(--texto); flex: 1; background: transparent; margin: 0; padding: 0; }
+.divider { font-size: 11px; font-weight: 700; color: var(--gris-5); letter-spacing: .06em; text-transform: uppercase; margin: 4px 0 8px; }
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.metric { background: var(--azul-claro); border-radius: var(--radio); padding: 12px; }
+.metric .num { font-size: 22px; font-weight: 700; color: var(--azul-osc); }
+.metric .lbl { font-size: 11px; color: var(--gris-6); margin-top: 2px; }
+.metric.warn { background: var(--amber-bg); }
+.metric.warn .num { color: var(--amber); }
+.metric.danger { background: var(--rojo-bg); }
+.metric.danger .num { color: var(--rojo); }
+.alert-box { border-radius: var(--radio-sm); padding: 10px 12px; margin-bottom: 10px; display: flex; gap: 8px; align-items: flex-start; font-size: 12px; line-height: 1.5; }
+.alert-warn   { background: var(--amber-bg); color: var(--amber); }
+.alert-danger { background: var(--rojo-bg); color: var(--rojo); }
+.alert-ok     { background: var(--verde-bg); color: var(--verde); }
+.alert-box i  { font-size: 18px; flex-shrink: 0; }
+.spinner { display: flex; align-items: center; justify-content: center; padding: 40px; }
+.spinner i { font-size: 32px; color: var(--gris-4); animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty { text-align: center; padding: 40px 20px; color: var(--gris-5); }
+.empty i { font-size: 40px; margin-bottom: 8px; display: block; }
+.barra-total { background: var(--azul-osc); color: #fff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.barra-total .lbl { font-size: 12px; opacity: .8; }
+.barra-total .val { font-size: 18px; font-weight: 700; }
+
+/* ── Login ──────────────────────────────────────────── */
+#s-login { background: #fff; }
+.login-top { background: var(--azul-osc); padding: 60px 24px 40px; text-align: center; }
+.login-logo { width: 64px; height: 64px; background: #fff; border-radius: 18px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
+.login-logo i { font-size: 34px; color: var(--azul-osc); }
+.login-title { font-size: 22px; font-weight: 800; color: #fff; }
+.login-sub   { font-size: 13px; color: rgba(255,255,255,.65); margin-top: 4px; }
+.login-body  { padding: 28px 20px; }
+
+/* ── Carrito ─────────────────────────────────────────── */
+.cart-fab { position: relative; }
+.cart-badge { position: absolute; top: -5px; right: -5px; background: #EF4444; color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.prod-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--gris-2); }
+.prod-item:last-child { border-bottom: none; }
+.prod-info { flex: 1; min-width: 0; }
+.prod-name  { font-size: 13px; font-weight: 600; color: var(--texto); }
+.prod-pres  { font-size: 11px; color: var(--gris-5); margin-top: 1px; }
+.prod-price { font-size: 12px; font-weight: 700; color: var(--azul); margin-top: 1px; }
+.add-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--azul-osc); color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background .15s; }
+.add-btn.added { background: #22C55E; }
+.cart-item { display: flex; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--gris-2); }
+.cart-item:last-child { border-bottom: none; }
+.cart-info { flex: 1; min-width: 0; }
+.cart-name { font-size: 13px; font-weight: 600; color: var(--texto); }
+.cart-pres { font-size: 11px; color: var(--gris-5); }
+.qty-ctrl { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.qty-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--gris-4); background: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--azul); font-weight: 700; }
+.qty-num { font-size: 14px; font-weight: 700; min-width: 22px; text-align: center; }
+.cart-sub { font-size: 12px; font-weight: 700; min-width: 55px; text-align: right; flex-shrink: 0; }
+.del-btn { width: 26px; height: 26px; border-radius: var(--radio-sm); border: none; background: var(--rojo-bg); color: #EF4444; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+
+/* ── Formas de pago ──────────────────────────────────── */
+.pago-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.pago-btn { padding: 10px 6px; border-radius: var(--radio); border: 1.5px solid var(--gris-3); background: #fff; font-size: 11px; font-weight: 700; color: var(--gris-6); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: var(--font); transition: all .15s; }
+.pago-btn i { font-size: 22px; }
+.pago-btn.sel { border-color: var(--azul); background: var(--azul-claro); color: var(--azul); }
+
+/* ── CC Panel ────────────────────────────────────────── */
+.cc-resumen { background: var(--azul-claro); border-radius: var(--radio-sm); padding: 12px; margin-bottom: 10px; border: 1px solid var(--azul-med); }
+.cc-resumen.danger { background: var(--rojo-bg); border-color: #FECACA; }
+.cc-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
+.cc-row .lbl { color: var(--gris-6); }
+.cc-row .val { font-weight: 700; }
+.cc-saldo { font-size: 17px; font-weight: 800; }
+.progress-bar { height: 6px; background: var(--gris-3); border-radius: 4px; overflow: hidden; margin: 6px 0 4px; }
+.progress-fill { height: 100%; border-radius: 4px; transition: width .4s; }
+.pf-ok { background: #22C55E; }
+.pf-warn { background: #F59E0B; }
+.pf-danger { background: #EF4444; }
+.cc-limits { display: flex; justify-content: space-between; font-size: 10px; color: var(--gris-5); }
+
+/* ── Ticket ──────────────────────────────────────────── */
+.ticket-wrap { background: var(--gris-1); padding: 12px; border-radius: var(--radio); margin-bottom: 12px; display: flex; justify-content: center; }
+.ticket { background: #fff; width: 100%; max-width: 290px; font-family: var(--font-mono); font-size: 12px; border: 1px dashed var(--gris-4); border-radius: 4px; padding: 16px 14px; }
+.t-center { text-align: center; }
+.t-biz { font-size: 15px; font-weight: 700; font-family: var(--font); }
+.t-hr { border-top: 1px dashed var(--gris-4); margin: 7px 0; }
+.t-row { display: flex; justify-content: space-between; padding: 2px 0; }
+.t-lbl { color: var(--gris-6); }
+.t-item { margin: 3px 0; }
+.t-item-det { display: flex; justify-content: space-between; color: var(--gris-5); font-size: 11px; }
+.t-total { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; border-top: 2px solid var(--texto); padding-top: 5px; margin-top: 6px; }
+.t-footer { text-align: center; margin-top: 10px; font-size: 10px; color: var(--gris-5); }
+
+/* ── WhatsApp preview ────────────────────────────────── */
+.wa-bg { background: #ECE5DD; border-radius: var(--radio); padding: 12px; margin-bottom: 12px; }
+.wa-bubble { background: #fff; border-radius: 12px 12px 12px 0; padding: 10px 12px; font-family: var(--font-mono); font-size: 11px; line-height: 1.75; white-space: pre-wrap; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
+.wa-time { font-size: 10px; color: var(--gris-5); text-align: right; margin-top: 4px; }
+
+/* ── CC Cards (admin) ────────────────────────────────── */
+.cc-card { background: #fff; border-radius: var(--radio); border: 1px solid var(--gris-3); padding: 13px 14px; margin-bottom: 10px; }
+.cc-card.danger { border-color: #FECACA; }
+.cc-card.warn   { border-color: #FDE68A; }
+.cc-card-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.cc-nombre { font-size: 14px; font-weight: 700; }
+.cc-card-actions { display: flex; gap: 8px; margin-top: 8px; }
+
+/* ── Movimientos ─────────────────────────────────────── */
+.mov-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--gris-2); }
+.mov-item:last-child { border-bottom: none; }
+.mov-tipo { font-size: 11px; font-weight: 700; }
+.mov-desc { font-size: 11px; color: var(--gris-5); }
+.mov-entrada { color: var(--verde); }
+.mov-salida  { color: var(--rojo); }
+
+/* ── Notas nuevas (admin home) ───────────────────────── */
+.nota-nueva { border-left: 3px solid var(--azul-osc); padding-left: 10px; margin-bottom: 12px; }
+.nota-nueva:last-child { margin-bottom: 0; }
+.nota-nueva .nn-title { font-size: 13px; font-weight: 700; }
+.nota-nueva .nn-sub   { font-size: 11px; color: var(--gris-5); margin-top: 2px; }
+.nota-nueva .nn-total { font-size: 15px; font-weight: 800; color: var(--azul-osc); margin-top: 4px; }
+
+/* ── Stock barras ────────────────────────────────────── */
+.stock-bar { height: 4px; background: var(--gris-3); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.stock-fill { height: 100%; border-radius: 4px; }
+.sf-ok     { background: #22C55E; }
+.sf-warn   { background: #F59E0B; }
+.sf-danger { background: #EF4444; }
+.qty-adj { display: flex; align-items: center; gap: 5px; }
+.qty-sm  { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--gris-4); background: #fff; font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--azul); font-weight: 700; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ══════════════════════════════════════════════════
+     LOGIN
+══════════════════════════════════════════════════ -->
+<div id="s-login" class="screen active" style="overflow-y:auto;">
+  <div class="login-top">
+    <div class="login-logo"><i class="ti ti-building-store"></i></div>
+    <div class="login-title">VDL Distribuidora</div>
+    <div class="login-sub">Sistema de Preventistas</div>
+  </div>
+  <div class="login-body">
+    <div class="card">
+      <div class="field">
+        <label class="lbl">Usuario</label>
+        <input type="text" id="inp-usuario" placeholder="Tu usuario" autocomplete="username">
+      </div>
+      <div class="field">
+        <label class="lbl">Contraseña</label>
+        <input type="password" id="inp-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div id="login-error" class="alert-box alert-danger" style="display:none;">
+        <i class="ti ti-alert-circle"></i><span id="login-error-txt"></span>
+      </div>
+      <button class="btn btn-primary" id="btn-login" onclick="doLogin()">
+        <i class="ti ti-login"></i> Ingresar
+      </button>
+    </div>
+    <p style="text-align:center;font-size:11px;color:var(--gris-5);margin-top:16px;">v1.0 · VDL Distribuidora</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PREVENTISTA - HOME
+══════════════════════════════════════════════════ -->
+<div id="s-home" class="screen">
+  <div class="topbar">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <h1 id="home-saludo">Buen día</h1>
+        <p id="home-fecha"></p>
+      </div>
+      <span class="badge b-azul" style="font-size:11px;" id="home-rol-badge"></span>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="metric-grid">
+      <div class="metric"><div class="num" id="home-pedidos-hoy">-</div><div class="lbl">Pedidos hoy</div></div>
+      <div class="metric"><div class="num" id="home-total-hoy">-</div><div class="lbl">Total hoy</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Acciones rápidas</div>
+      <button class="btn btn-primary" onclick="irAClientes()"><i class="ti ti-shopping-cart"></i> Nuevo Pedido</button>
+      <button class="btn btn-secondary" onclick="ir('s-pedidos')"><i class="ti ti-list"></i> Mis Pedidos</button>
+      <button class="btn btn-danger" onclick="ir('s-devolucion')"><i class="ti ti-arrow-back"></i> Registrar Devolución</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Últimos pedidos</div>
+      <div id="home-ultimos-pedidos"><div class="spinner"><i class="ti ti-loader"></i></div></div>
+    </div>
+  </div>
+  <nav class="navbar">
+    <button class="nav-btn active" onclick="ir('s-home')"><i class="ti ti-home"></i>Inicio</button>
+    <button class="nav-btn" onclick="ir('s-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
+    <button class="nav-btn" onclick="ir('s-productos-lista')"><i class="ti ti-package"></i>Productos</button>
+    <button class="nav-btn" onclick="ir('s-clientes')"><i class="ti ti-users"></i>Clientes</button>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PREVENTISTA - CLIENTES
+══════════════════════════════════════════════════ -->
+<div id="s-clientes" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="irAtras()"><i class="ti ti-arrow-left"></i></button>
+      <div><h1>Seleccionar Cliente</h1><p>Nuevo pedido</p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="search-box">
+      <i class="ti ti-search"></i>
+      <input type="text" placeholder="Buscar cliente..." oninput="filtrarClientes(this.value)">
+    </div>
+    <div class="card" style="padding:8px 14px;" id="lista-clientes">
+      <div class="spinner"><i class="ti ti-loader"></i></div>
+    </div>
+  </div>
+  <nav class="navbar">
+    <button class="nav-btn" onclick="ir('s-home')"><i class="ti ti-home"></i>Inicio</button>
+    <button class="nav-btn" onclick="ir('s-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
+    <button class="nav-btn" onclick="ir('s-productos-lista')"><i class="ti ti-package"></i>Productos</button>
+    <button class="nav-btn active" onclick="ir('s-clientes')"><i class="ti ti-users"></i>Clientes</button>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PREVENTISTA - CATÁLOGO (nuevo pedido)
+══════════════════════════════════════════════════ -->
+<div id="s-catalogo" class="screen">
+  <div class="topbar">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="topbar-row">
+        <button class="back" onclick="ir('s-clientes')"><i class="ti ti-arrow-left"></i></button>
+        <div><h1>Productos</h1><p id="catalogo-cliente-nombre">-</p></div>
+      </div>
+      <div class="cart-fab" onclick="ir('s-carrito')" style="cursor:pointer;">
+        <i class="ti ti-shopping-cart" style="font-size:26px;color:#fff;"></i>
+        <span class="cart-badge" id="cart-count">0</span>
+      </div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="search-box">
+      <i class="ti ti-search"></i>
+      <input type="text" placeholder="Buscar producto..." oninput="filtrarProductos(this.value)">
+    </div>
+    <div id="lista-catalogo"><div class="spinner"><i class="ti ti-loader"></i></div></div>
+  </div>
+  <div class="barra-total">
+    <div><div class="lbl" id="catalogo-barra-items">0 productos</div><div class="val" id="catalogo-barra-total">$0</div></div>
+    <button class="btn btn-primary btn-sm" style="background:#fff;color:var(--azul-osc);" onclick="ir('s-carrito')">
+      Ver carrito <i class="ti ti-shopping-cart"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PREVENTISTA - CARRITO
+══════════════════════════════════════════════════ -->
+<div id="s-carrito" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="ir('s-catalogo')"><i class="ti ti-arrow-left"></i></button>
+      <div><h1>Carrito</h1><p id="carrito-cliente-nombre">-</p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="card" style="padding:8px 14px;" id="carrito-items"></div>
+    <div class="card">
+      <div class="card-title">Forma de pago</div>
+      <div class="pago-grid">
+        <button class="pago-btn" id="pago-ef" onclick="selPago('EFECTIVO')"><i class="ti ti-cash"></i>Efectivo</button>
+        <button class="pago-btn" id="pago-tr" onclick="selPago('TRANSFERENCIA')"><i class="ti ti-building-bank"></i>Transfer.</button>
+        <button class="pago-btn" id="pago-cc" onclick="selPago('CUENTA_CORRIENTE')"><i class="ti ti-credit-card"></i>Cta. Cte.</button>
+      </div>
+      <div id="cc-panel" style="display:none;">
+        <div class="cc-resumen" id="cc-resumen-panel"></div>
+        <div id="cc-alerta"></div>
+      </div>
+    </div>
+    <div class="card" style="padding:10px 14px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--gris-6);margin-bottom:4px;">
+        <span id="carrito-subtotal-lbl">Subtotal</span><span id="carrito-subtotal">$0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:var(--azul-osc);padding-top:8px;border-top:1px solid var(--gris-2);margin-top:4px;">
+        <span>Total</span><span id="carrito-total-val">$0</span>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl">Observaciones</label>
+      <input type="text" id="carrito-obs" placeholder="Ej: entregar por la tarde...">
+    </div>
+    <button class="btn btn-primary" id="btn-confirmar-pedido" onclick="confirmarPedido()">
+      <i class="ti ti-check"></i> Confirmar Pedido
+    </button>
+    <button class="btn btn-secondary" onclick="ir('s-catalogo')">
+      <i class="ti ti-arrow-left"></i> Seguir agregando
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PREVENTISTA - NOTA DE PEDIDO
+══════════════════════════════════════════════════ -->
+<div id="s-nota" class="screen">
+  <div class="topbar"><h1>Nota de Pedido</h1><p>Pedido confirmado</p></div>
+  <div class="scroll">
+    <div style="text-align:center;padding:16px 0 20px;">
+      <div style="width:56px;height:56px;background:var(--verde-bg);border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;">
+        <i class="ti ti-check" style="font-size:28px;color:var(--verde);"></i>
+      </div>
+      <div style="font-size:16px;font-weight:700;">Pedido Confirmado</div>
+      <div style="font-size:12px;color:var(--gris-5);margin-top:3px;">Stock actualizado · Admin notificado</div>
+    </div>
+    <div class="card" style="padding:10px 14px;" id="nota-resumen"></div>
+    <button class="btn btn-wa" onclick="enviarWhatsApp()"><i class="ti ti-brand-whatsapp"></i> Enviar por WhatsApp</button>
+    <button class="btn btn-secondary" onclick="irInicio()"><i class="ti ti-home"></i> Volver al inicio</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PREVENTISTA - PEDIDOS
+══════════════════════════════════════════════════ -->
+<div id="s-pedidos" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="irAtras()"><i class="ti ti-arrow-left"></i></button>
+      <div><h1>Mis Pedidos</h1><p>Historial</p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="lista-pedidos"><div class="spinner"><i class="ti ti-loader"></i></div></div>
+  </div>
+  <nav class="navbar">
+    <button class="nav-btn" onclick="ir('s-home')"><i class="ti ti-home"></i>Inicio</button>
+    <button class="nav-btn active" onclick="ir('s-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
+    <button class="nav-btn" onclick="ir('s-productos-lista')"><i class="ti ti-package"></i>Productos</button>
+    <button class="nav-btn" onclick="ir('s-clientes')"><i class="ti ti-users"></i>Clientes</button>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PREVENTISTA - PRODUCTOS LISTA
+══════════════════════════════════════════════════ -->
+<div id="s-productos-lista" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="irAtras()"><i class="ti ti-arrow-left"></i></button>
+      <div><h1>Productos</h1><p>Stock disponible</p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="search-box">
+      <i class="ti ti-search"></i>
+      <input type="text" placeholder="Buscar producto..." oninput="filtrarProductosLista(this.value)">
+    </div>
+    <div id="lista-productos-vista"><div class="spinner"><i class="ti ti-loader"></i></div></div>
+  </div>
+  <nav class="navbar">
+    <button class="nav-btn" onclick="ir('s-home')"><i class="ti ti-home"></i>Inicio</button>
+    <button class="nav-btn" onclick="ir('s-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
+    <button class="nav-btn active" onclick="ir('s-productos-lista')"><i class="ti ti-package"></i>Productos</button>
+    <button class="nav-btn" onclick="ir('s-clientes')"><i class="ti ti-users"></i>Clientes</button>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PREVENTISTA - DEVOLUCIÓN
+══════════════════════════════════════════════════ -->
+<div id="s-devolucion" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="irAtras()"><i class="ti ti-arrow-left"></i></button>
+      <div><h1>Devolución</h1><p>Registrar mercadería</p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="card">
+      <div class="field">
+        <label class="lbl">Cliente</label>
+        <select id="dev-cliente" onchange="cargarPedidosDevolucion()"></select>
+      </div>
+      <div class="field">
+        <label class="lbl">Pedido de origen (opcional)</label>
+        <select id="dev-pedido"><option value="">Sin pedido de referencia</option></select>
+      </div>
+      <div class="field">
+        <label class="lbl">Producto</label>
+        <select id="dev-producto"></select>
+      </div>
+      <div class="field">
+        <label class="lbl">Cantidad a devolver</label>
+        <input type="number" id="dev-cantidad" value="1" min="1">
+      </div>
+      <div class="field">
+        <label class="lbl">Motivo</label>
+        <input type="text" id="dev-motivo" placeholder="Ej: producto vencido, error de pedido...">
+      </div>
+      <div id="dev-error" class="alert-box alert-danger" style="display:none;">
+        <i class="ti ti-alert-circle"></i><span id="dev-error-txt"></span>
+      </div>
+      <button class="btn btn-danger" onclick="confirmarDevolucion()">
+        <i class="ti ti-arrow-back"></i> Confirmar Devolución
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TICKET IMPRESIÓN
+══════════════════════════════════════════════════ -->
+<div id="s-ticket" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="irAtras()"><i class="ti ti-arrow-left"></i></button>
+      <div><h1>Vista de Impresión</h1><p>Ticket 80mm</p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="ticket-contenido"></div>
+    <button class="btn btn-print" onclick="imprimirTicket()"><i class="ti ti-printer"></i> Imprimir</button>
+    <button class="btn btn-secondary" onclick="irAtras()"><i class="ti ti-arrow-left"></i> Volver</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     ADMIN - HOME
+══════════════════════════════════════════════════ -->
+<div id="a-home" class="screen">
+  <div class="topbar">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div><h1>Panel Admin</h1><p id="admin-fecha"></p></div>
+      <span class="badge" style="background:rgba(255,255,255,.2);color:#fff;font-size:11px;">ADMIN</span>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="metric-grid" id="admin-metrics">
+      <div class="metric"><div class="num" id="a-pedidos-hoy">-</div><div class="lbl">Pedidos hoy</div></div>
+      <div class="metric"><div class="num" id="a-total-hoy">-</div><div class="lbl">Facturado hoy</div></div>
+      <div class="metric warn"><div class="num" id="a-cc-alertas">-</div><div class="lbl">CC cerca límite</div></div>
+      <div class="metric warn"><div class="num" id="a-stock-alertas">-</div><div class="lbl">Stock bajo/neg.</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Notas nuevas <span class="badge b-peligro" id="a-notas-badge">0</span></div>
+      <div id="a-notas-lista"><div class="spinner"><i class="ti ti-loader"></i></div></div>
+      <button class="btn btn-secondary" style="margin-top:8px;" onclick="ir('a-pedidos')">
+        <i class="ti ti-list"></i> Ver todos los pedidos
+      </button>
+    </div>
+    <div class="card">
+      <div class="card-title">Ventas</div>
+      <button class="btn btn-primary" onclick="irAClientesAdmin()"><i class="ti ti-shopping-cart"></i> Nuevo Pedido</button>
+      <button class="btn btn-danger" onclick="ir('s-devolucion')"><i class="ti ti-arrow-back"></i> Registrar Devolución</button>
+    </div>
+  </div>
+  <nav class="navbar">
+    <button class="nav-btn active" onclick="ir('a-home')"><i class="ti ti-home"></i>Inicio</button>
+    <button class="nav-btn" onclick="ir('a-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
+    <button class="nav-btn" onclick="ir('a-cc')"><i class="ti ti-credit-card"></i>Cta. Cte.</button>
+    <button class="nav-btn" onclick="ir('a-stock')"><i class="ti ti-package"></i>Stock</button>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     ADMIN - PEDIDOS
+══════════════════════════════════════════════════ -->
+<div id="a-pedidos" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="irAtras()"><i class="ti ti-arrow-left"></i></button>
+      <div><h1>Todos los Pedidos</h1><p id="a-pedidos-sub">Hoy</p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="a-lista-pedidos"><div class="spinner"><i class="ti ti-loader"></i></div></div>
+  </div>
+  <nav class="navbar">
+    <button class="nav-btn" onclick="ir('a-home')"><i class="ti ti-home"></i>Inicio</button>
+    <button class="nav-btn active" onclick="ir('a-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
+    <button class="nav-btn" onclick="ir('a-cc')"><i class="ti ti-credit-card"></i>Cta. Cte.</button>
+    <button class="nav-btn" onclick="ir('a-stock')"><i class="ti ti-package"></i>Stock</button>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     ADMIN - DETALLE PEDIDO
+══════════════════════════════════════════════════ -->
+<div id="a-detalle-pedido" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="irAtras()"><i class="ti ti-arrow-left"></i></button>
+      <div><h1 id="a-detalle-titulo">Pedido</h1><p id="a-detalle-sub"></p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="a-detalle-contenido"><div class="spinner"><i class="ti ti-loader"></i></div></div>
+    <button class="btn btn-print" onclick="verTicket()"><i class="ti ti-printer"></i> Ver ticket e imprimir</button>
+    <button class="btn btn-secondary" onclick="irAtras()"><i class="ti ti-arrow-left"></i> Volver</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     ADMIN - CUENTA CORRIENTE
+══════════════════════════════════════════════════ -->
+<div id="a-cc" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="irAtras()"><i class="ti ti-arrow-left"></i></button>
+      <div><h1>Cuenta Corriente</h1><p>Saldos por cliente</p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="a-cc-lista"><div class="spinner"><i class="ti ti-loader"></i></div></div>
+  </div>
+  <nav class="navbar">
+    <button class="nav-btn" onclick="ir('a-home')"><i class="ti ti-home"></i>Inicio</button>
+    <button class="nav-btn" onclick="ir('a-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
+    <button class="nav-btn active" onclick="ir('a-cc')"><i class="ti ti-credit-card"></i>Cta. Cte.</button>
+    <button class="nav-btn" onclick="ir('a-stock')"><i class="ti ti-package"></i>Stock</button>
+  </nav>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     ADMIN - REGISTRAR COBRO
+══════════════════════════════════════════════════ -->
+<div id="a-cobro" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="irAtras()"><i class="ti ti-arrow-left"></i></button>
+      <div><h1>Registrar Cobro</h1><p>Cuenta corriente</p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="card">
+      <div style="background:var(--azul-claro);border-radius:var(--radio-sm);padding:12px;margin-bottom:14px;">
+        <div style="font-size:12px;color:var(--gris-6);">Cliente</div>
+        <div style="font-size:15px;font-weight:800;color:var(--azul-osc);margin-top:2px;" id="cobro-cliente-nombre">-</div>
+        <div style="font-size:12px;color:var(--gris-6);margin-top:8px;">Saldo deudor actual</div>
+        <div style="font-size:20px;font-weight:800;color:var(--amber);" id="cobro-saldo-actual">$0</div>
+      </div>
+      <div class="field">
+        <label class="lbl">Importe cobrado</label>
+        <input type="number" id="cobro-importe" placeholder="Ej: 200000" min="1">
+      </div>
+      <div class="field">
+        <label class="lbl">Forma de cobro</label>
+        <select id="cobro-forma">
+          <option value="Efectivo">Efectivo</option>
+          <option value="Transferencia">Transferencia bancaria</option>
+          <option value="Cheque">Cheque</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="lbl">Observaciones</label>
+        <input type="text" id="cobro-obs" placeholder="Ej: cheque N° 12345...">
+      </div>
+      <div id="cobro-error" class="alert-box alert-danger" style="display:none;">
+        <i class="ti ti-alert-circle"></i><span id="cobro-error-txt"></span>
+      </div>
+      <button class="btn btn-success" onclick="confirmarCobro()"><i class="ti ti-check"></i> Confirmar cobro</button>
+      <button class="btn btn-secondary" onclick="irAtras()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     ADMIN - MOVIMIENTOS CC
+══════════════════════════════════════════════════ -->
+<div id="a-movcc" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="irAtras()"><i class="ti ti-arrow-left"></i></button>
+      <div><h1>Movimientos</h1><p id="movcc-cliente-nombre">-</p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="a-movcc-lista"><div class="spinner"><i class="ti ti-loader"></i></div></div>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;">
+      <span style="font-size:13px;font-weight:700;color:var(--gris-6);">Saldo deudor actual</span>
+      <span style="font-size:17px;font-weight:800;color:var(--amber);" id="movcc-saldo">$0</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     ADMIN - STOCK
+══════════════════════════════════════════════════ -->
+<div id="a-stock" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="irAtras()"><i class="ti ti-arrow-left"></i></button>
+      <div><h1>Control de Stock</h1><p>Ajustes manuales</p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="a-stock-lista"><div class="spinner"><i class="ti ti-loader"></i></div></div>
+  </div>
+  <nav class="navbar">
+    <button class="nav-btn" onclick="ir('a-home')"><i class="ti ti-home"></i>Inicio</button>
+    <button class="nav-btn" onclick="ir('a-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
+    <button class="nav-btn" onclick="ir('a-cc')"><i class="ti ti-credit-card"></i>Cta. Cte.</button>
+    <button class="nav-btn active" onclick="ir('a-stock')"><i class="ti ti-package"></i>Stock</button>
+  </nav>
+</div>
+
+</div><!-- #app -->
+
+<script>
+// ══════════════════════════════════════════════════════════
+// CONFIGURACIÓN
+// ══════════════════════════════════════════════════════════
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwnwVsUjWMkbx5Rp-a6AHPJMMHqlDQwOxtVElHg9bV8Tkxf3z9oMBw7VBy5Lf2deGez/exec';
+const LIMITE_CC  = 1000000;
+
+// ── Estado global ──────────────────────────────────────────
+let usuario  = null;
+let productos = [];
+let clientes  = [];
+let carrito   = {};          // { idProducto: { prod, cantidad } }
+let clienteActual = null;
+let formaPago = 'EFECTIVO';
+let ultimoPedidoId = null;
+let ultimaScreenAntes = null;
+let ccClienteActual = null;
+
+// ══════════════════════════════════════════════════════════
+// NAVEGACIÓN
+// ══════════════════════════════════════════════════════════
+function ir(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screen).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function irAtras() {
+  const rol = usuario?.rol;
+  if (rol === 'ADMIN') ir('a-home');
+  else ir('s-home');
+}
+
+function irInicio() {
+  carrito = {};
+  clienteActual = null;
+  formaPago = 'EFECTIVO';
+  const rol = (usuario?.rol || '').toUpperCase();
+  if (rol === 'ADMIN') {
+    cargarAdminHome();
+    ir('a-home');
+  } else {
+    cargarHome();
+    ir('s-home');
+  }
+}
+
+function irAClientesAdmin() {
+  // Admin usa el mismo flujo de venta que el preventista
+  carrito = {};
+  actualizarCarritoBadge();
+  cargarClientes();
+  ir('s-clientes');
+}
+
+function irAClientes() {
+  carrito = {};
+  actualizarCarritoBadge();
+  cargarClientes();
+  ir('s-clientes');
+}
+
+// ══════════════════════════════════════════════════════════
+// API
+// ══════════════════════════════════════════════════════════
+async function apiGet(params) {
+  const url = SCRIPT_URL + '?' + new URLSearchParams(params);
+  const res = await fetch(url, { redirect: 'follow' });
+  return res.json();
+}
+
+async function apiPost(body) {
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+// ══════════════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════════════
+async function doLogin() {
+  const usr = document.getElementById('inp-usuario').value.trim();
+  const pwd = document.getElementById('inp-password').value.trim();
+  const err = document.getElementById('login-error');
+  const btn = document.getElementById('btn-login');
+
+  if (!usr || !pwd) { mostrarError(err, 'Completá usuario y contraseña'); return; }
+  err.style.display = 'none';
+  btn.innerHTML = '<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Ingresando...';
+  btn.disabled = true;
+
+  try {
+    const res = await apiPost({ action: 'login', usuario: usr, password: pwd });
+    if (!res.ok) {
+      mostrarError(err, res.error);
+    } else {
+      usuario = res.data;
+      // Normalizar rol por si viene con distinto case
+      usuario.rol = (usuario.rol || '').toString().trim().toUpperCase();
+      if (usuario.rol === 'ADMIN') {
+        document.getElementById('admin-fecha').textContent = fechaHoy();
+        cargarAdminHome();
+        ir('a-home');
+      } else {
+        document.getElementById('home-saludo').textContent = 'Buen día, ' + usuario.nombre.split(' ')[0];
+        document.getElementById('home-fecha').textContent = fechaHoy();
+        document.getElementById('home-rol-badge').textContent = usuario.rol;
+        cargarHome();
+        ir('s-home');
+      }
+    }
+  } catch (e) {
+    mostrarError(err, 'Error de conexión. Verificá tu internet.');
+  }
+
+  btn.innerHTML = '<i class="ti ti-login"></i> Ingresar';
+  btn.disabled = false;
+}
+
+// ══════════════════════════════════════════════════════════
+// HOME PREVENTISTA
+// ══════════════════════════════════════════════════════════
+async function cargarHome() {
+  try {
+    const res = await apiGet({ action: 'pedidos', idUsuario: usuario.id, rol: usuario.rol });
+    if (!res.ok) return;
+    const hoy = fechaHoyStr();
+    const pedidosHoy = res.data.filter(p => p.Fecha === hoy);
+    const totalHoy   = pedidosHoy.reduce((s, p) => s + Number(p.Total || 0), 0);
+    document.getElementById('home-pedidos-hoy').textContent = pedidosHoy.length;
+    document.getElementById('home-total-hoy').textContent   = formatPesos(totalHoy);
+
+    const cont = document.getElementById('home-ultimos-pedidos');
+    if (pedidosHoy.length === 0) {
+      cont.innerHTML = '<div class="empty"><i class="ti ti-list"></i><p>Sin pedidos hoy</p></div>';
+      return;
+    }
+    cont.innerHTML = pedidosHoy.slice(0, 3).map(p => `
+      <div class="list-item">
+        <div class="li-left">
+          <div class="avatar av-az">${iniciales(p.Nombre_Cliente)}</div>
+          <div>
+            <div class="li-name">${p.Nombre_Cliente}</div>
+            <div class="li-sub">${p.Fecha}</div>
+          </div>
+        </div>
+        <div class="li-right">
+          <div class="li-price">${formatPesos(Number(p.Total))}</div>
+          <span class="badge ${p.Estado === 'CONFIRMADO' ? 'b-ok' : 'b-pend'}">${p.Estado}</span>
+        </div>
+      </div>`).join('');
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════
+// CLIENTES
+// ══════════════════════════════════════════════════════════
+async function cargarClientes() {
+  const cont = document.getElementById('lista-clientes');
+  cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
+  try {
+    const res = await apiGet({ action: 'clientes' });
+    clientes = res.ok ? res.data : [];
+    renderClientes(clientes);
+    // También cargar selects de devolución
+    const selCli = document.getElementById('dev-cliente');
+    selCli.innerHTML = clientes.map(c => `<option value="${c.ID_Cliente}">${c.Nombre}</option>`).join('');
+    cargarPedidosDevolucion();
+  } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error al cargar</p></div>'; }
+}
+
+function renderClientes(lista) {
+  const cont = document.getElementById('lista-clientes');
+  if (!lista.length) { cont.innerHTML = '<div class="empty"><i class="ti ti-users"></i><p>Sin clientes</p></div>'; return; }
+  cont.innerHTML = lista.map((c, i) => `
+    <div class="list-item" onclick="seleccionarCliente(${c.ID_Cliente})">
+      <div class="li-left">
+        <div class="avatar ${['av-az','av-gr','av-am'][i%3]}">${iniciales(c.Nombre)}</div>
+        <div>
+          <div class="li-name">${c.Nombre}</div>
+          <div class="li-sub">${c.Direccion || ''}</div>
+        </div>
+      </div>
+      <i class="ti ti-chevron-right" style="color:var(--gris-4);font-size:18px;"></i>
+    </div>`).join('');
+}
+
+function filtrarClientes(q) {
+  const filtrados = clientes.filter(c => c.Nombre.toLowerCase().includes(q.toLowerCase()));
+  renderClientes(filtrados);
+}
+
+async function seleccionarCliente(idCliente) {
+  clienteActual = clientes.find(c => Number(c.ID_Cliente) === Number(idCliente));
+  document.getElementById('catalogo-cliente-nombre').textContent = clienteActual?.Nombre || '-';
+  document.getElementById('carrito-cliente-nombre').textContent  = clienteActual?.Nombre || '-';
+  carrito = {};
+  actualizarCarritoBadge();
+  await cargarCatalogo();
+  ir('s-catalogo');
+}
+
+// ══════════════════════════════════════════════════════════
+// CATÁLOGO
+// ══════════════════════════════════════════════════════════
+async function cargarCatalogo() {
+  const cont = document.getElementById('lista-catalogo');
+  cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
+  try {
+    const res = await apiGet({ action: 'productos' });
+    productos = res.ok ? res.data : [];
+    renderCatalogo(productos);
+  } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error al cargar</p></div>'; }
+}
+
+function renderCatalogo(lista) {
+  const cont = document.getElementById('lista-catalogo');
+  if (!lista.length) { cont.innerHTML = '<div class="empty"><i class="ti ti-package"></i><p>Sin productos</p></div>'; return; }
+
+  const categorias = [...new Set(lista.map(p => p.Categoria || 'General'))];
+  cont.innerHTML = categorias.map(cat => {
+    const prods = lista.filter(p => (p.Categoria || 'General') === cat);
+    return `<div class="divider">${cat}</div>
+    <div class="card" style="padding:8px 14px;margin-bottom:10px;">
+      ${prods.map(p => {
+        const enCarrito = carrito[p.ID_Producto];
+        const stockColor = Number(p.Stock_Actual) < 0 ? 'color:var(--rojo)' : Number(p.Stock_Actual) < 10 ? 'color:var(--amber)' : 'color:var(--gris-5)';
+        return `<div class="prod-item">
+          <div class="prod-info">
+            <div class="prod-name">${p.Nombre}</div>
+            <div class="prod-pres">${p.Presentacion} · <span style="${stockColor}">Stock: ${p.Stock_Actual}</span></div>
+            <div class="prod-price">${formatPesos(Number(p.Precio))}</div>
+          </div>
+          <button class="add-btn ${enCarrito ? 'added' : ''}" id="addbtn-${p.ID_Producto}"
+            onclick="agregarAlCarrito(${p.ID_Producto})" aria-label="${enCarrito ? 'Agregado' : 'Agregar'}">
+            ${enCarrito ? '<i class="ti ti-check" style="font-size:15px;"></i>' : '+'}
+          </button>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+function filtrarProductos(q) {
+  const filtrados = productos.filter(p =>
+    p.Nombre.toLowerCase().includes(q.toLowerCase()) ||
+    (p.Presentacion || '').toLowerCase().includes(q.toLowerCase())
+  );
+  renderCatalogo(filtrados);
+}
+
+function agregarAlCarrito(idProducto) {
+  const prod = productos.find(p => Number(p.ID_Producto) === Number(idProducto));
+  if (!prod) return;
+  if (carrito[idProducto]) {
+    carrito[idProducto].cantidad++;
+  } else {
+    carrito[idProducto] = { prod, cantidad: 1 };
+  }
+  const btn = document.getElementById('addbtn-' + idProducto);
+  if (btn) { btn.classList.add('added'); btn.innerHTML = '<i class="ti ti-check" style="font-size:15px;"></i>'; }
+  actualizarCarritoBadge();
+  actualizarBarraTotal();
+}
+
+function actualizarCarritoBadge() {
+  const total = Object.values(carrito).reduce((s, i) => s + i.cantidad, 0);
+  document.getElementById('cart-count').textContent = total;
+}
+
+function actualizarBarraTotal() {
+  const items = Object.values(carrito);
+  const total = items.reduce((s, i) => s + i.cantidad * Number(i.prod.Precio), 0);
+  document.getElementById('catalogo-barra-items').textContent = items.length + ' producto' + (items.length !== 1 ? 's' : '');
+  document.getElementById('catalogo-barra-total').textContent = formatPesos(total);
+}
+
+// ══════════════════════════════════════════════════════════
+// CARRITO
+// ══════════════════════════════════════════════════════════
+function renderCarrito() {
+  const items = Object.entries(carrito);
+  const cont = document.getElementById('carrito-items');
+  if (!items.length) { cont.innerHTML = '<div class="empty"><i class="ti ti-shopping-cart"></i><p>Carrito vacío</p></div>'; return; }
+
+  cont.innerHTML = items.map(([id, item]) => `
+    <div class="cart-item">
+      <div class="cart-info">
+        <div class="cart-name">${item.prod.Nombre}</div>
+        <div class="cart-pres">${item.prod.Presentacion} · ${formatPesos(Number(item.prod.Precio))} c/u</div>
+      </div>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="cambiarCantidad(${id}, -1)">−</button>
+        <span class="qty-num">${item.cantidad}</span>
+        <button class="qty-btn" onclick="cambiarCantidad(${id}, 1)">+</button>
+      </div>
+      <div class="cart-sub">${formatPesos(item.cantidad * Number(item.prod.Precio))}</div>
+      <button class="del-btn" onclick="quitarDelCarrito(${id})" aria-label="Eliminar">
+        <i class="ti ti-trash" style="font-size:13px;"></i>
+      </button>
+    </div>`).join('');
+
+  const total = items.reduce((s, [, i]) => s + i.cantidad * Number(i.prod.Precio), 0);
+  document.getElementById('carrito-subtotal-lbl').textContent = items.length + ' producto' + (items.length !== 1 ? 's' : '');
+  document.getElementById('carrito-subtotal').textContent = formatPesos(total);
+  document.getElementById('carrito-total-val').textContent = formatPesos(total);
+}
+
+function cambiarCantidad(id, delta) {
+  if (!carrito[id]) return;
+  carrito[id].cantidad = Math.max(1, carrito[id].cantidad + delta);
+  renderCarrito();
+  actualizarCarritoBadge();
+  if (formaPago === 'CUENTA_CORRIENTE') actualizarPanelCC();
+}
+
+function quitarDelCarrito(id) {
+  delete carrito[id];
+  const btn = document.getElementById('addbtn-' + id);
+  if (btn) { btn.classList.remove('added'); btn.innerHTML = '+'; }
+  renderCarrito();
+  actualizarCarritoBadge();
+  actualizarBarraTotal();
+  if (formaPago === 'CUENTA_CORRIENTE') actualizarPanelCC();
+}
+
+function selPago(tipo) {
+  formaPago = tipo;
+  ['EFECTIVO','TRANSFERENCIA','CUENTA_CORRIENTE'].forEach(t => {
+    const id = t === 'EFECTIVO' ? 'pago-ef' : t === 'TRANSFERENCIA' ? 'pago-tr' : 'pago-cc';
+    document.getElementById(id).classList.toggle('sel', t === tipo);
+  });
+  const panel = document.getElementById('cc-panel');
+  if (tipo === 'CUENTA_CORRIENTE') { panel.style.display = 'block'; actualizarPanelCC(); }
+  else panel.style.display = 'none';
+}
+
+async function actualizarPanelCC() {
+  if (!clienteActual) return;
+  try {
+    const res = await apiGet({ action: 'movimientosCC', idCliente: clienteActual.ID_Cliente });
+    // Calcular saldo actual desde CC
+    const ccRes = await apiGet({ action: 'cuentasCorrientes' });
+    if (!ccRes.ok) return;
+    const cc = ccRes.data.find(c => Number(c.ID_Cliente) === Number(clienteActual.ID_Cliente));
+    ccClienteActual = cc;
+    const saldoActual = cc ? Number(cc.Saldo_Deudor) : 0;
+    const totalPedido = Object.values(carrito).reduce((s, i) => s + i.cantidad * Number(i.prod.Precio), 0);
+    const nuevoSaldo  = saldoActual + totalPedido;
+    const pct         = Math.min(100, Math.round(nuevoSaldo / LIMITE_CC * 100));
+    const superado    = nuevoSaldo > LIMITE_CC;
+    const cerca       = nuevoSaldo > LIMITE_CC * 0.75;
+
+    const panel = document.getElementById('cc-resumen-panel');
+    panel.className = 'cc-resumen' + (superado ? ' danger' : '');
+    panel.innerHTML = `
+      <div class="cc-row"><span class="lbl">Saldo deudor actual</span><span class="cc-saldo" style="color:${superado?'var(--rojo)':cerca?'var(--amber)':'var(--azul-osc)'}">${formatPesos(saldoActual)}</span></div>
+      <div class="cc-row"><span class="lbl">Este pedido</span><span class="val" style="color:var(--azul)">+${formatPesos(totalPedido)}</span></div>
+      <div class="cc-row"><span class="lbl">Nuevo saldo</span><span class="val" style="color:${superado?'var(--rojo)':cerca?'var(--amber)':'var(--texto)'};font-size:15px;">${formatPesos(nuevoSaldo)}</span></div>
+      <div class="progress-bar"><div class="progress-fill ${superado?'pf-danger':cerca?'pf-warn':'pf-ok'}" style="width:${pct}%"></div></div>
+      <div class="cc-limits"><span>$0</span><span>Límite ${formatPesos(LIMITE_CC)}</span></div>`;
+
+    const alerta = document.getElementById('cc-alerta');
+    if (superado) {
+      alerta.innerHTML = `<div class="alert-box alert-danger"><i class="ti ti-alert-circle"></i><div><strong>Límite superado.</strong> Nuevo saldo: ${formatPesos(nuevoSaldo)}. Podés confirmar igual o cambiar la forma de pago.</div></div>`;
+    } else if (cerca) {
+      alerta.innerHTML = `<div class="alert-box alert-warn"><i class="ti ti-alert-triangle"></i><div>El cliente llega al ${pct}% del límite. Podés continuar.</div></div>`;
+    } else {
+      alerta.innerHTML = '';
+    }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════
+// CONFIRMAR PEDIDO
+// ══════════════════════════════════════════════════════════
+async function confirmarPedido() {
+  const items = Object.values(carrito);
+  if (!items.length) { alert('El carrito está vacío'); return; }
+  if (!clienteActual) { alert('Seleccioná un cliente'); return; }
+
+  const btn = document.getElementById('btn-confirmar-pedido');
+  btn.innerHTML = '<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Procesando...';
+  btn.disabled = true;
+
+  try {
+    const body = {
+      action:       'crearPedido',
+      idUsuario:    usuario.id,
+      idCliente:    clienteActual.ID_Cliente,
+      items:        items.map(i => ({ idProducto: i.prod.ID_Producto, cantidad: i.cantidad, precioUnit: i.prod.Precio })),
+      formaPago:    formaPago,
+      observaciones: document.getElementById('carrito-obs').value,
+    };
+    const res = await apiPost(body);
+    if (!res.ok) { alert('Error: ' + res.error); return; }
+
+    ultimoPedidoId = res.data.idPedido;
+    renderNotaPedido(res.data);
+    ir('s-nota');
+  } catch(e) {
+    alert('Error de conexión');
+  }
+
+  btn.innerHTML = '<i class="ti ti-check"></i> Confirmar Pedido';
+  btn.disabled = false;
+}
+
+function renderNotaPedido(data) {
+  const items = Object.values(carrito);
+  const total = items.reduce((s, i) => s + i.cantidad * Number(i.prod.Precio), 0);
+  document.getElementById('nota-resumen').innerHTML = `
+    <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span style="color:var(--gris-6);">Nota N°</span><span style="font-weight:700;">${data.numeronota}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span style="color:var(--gris-6);">Cliente</span><span style="font-weight:600;">${clienteActual?.Nombre}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span style="color:var(--gris-6);">Productos</span><span>${items.length}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span style="color:var(--gris-6);">Pago</span><span>${formatFormaPago(formaPago)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:var(--azul-osc);padding-top:8px;border-top:1px solid var(--gris-2);margin-top:6px;"><span>Total</span><span>${formatPesos(total)}</span></div>`;
+}
+
+// ══════════════════════════════════════════════════════════
+// WHATSAPP
+// ══════════════════════════════════════════════════════════
+async function enviarWhatsApp() {
+  try {
+    const res = await apiGet({ action: 'whatsapp', idPedido: ultimoPedidoId });
+    if (res.ok && res.data.texto) {
+      const url = 'https://wa.me/?text=' + encodeURIComponent(res.data.texto);
+      window.open(url, '_blank');
+    }
+  } catch(e) { alert('Error al generar el mensaje'); }
+}
+
+// ══════════════════════════════════════════════════════════
+// TICKET IMPRESIÓN
+// ══════════════════════════════════════════════════════════
+async function verTicket() {
+  const cont = document.getElementById('ticket-contenido');
+  cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
+  ir('s-ticket');
+  try {
+    const res = await apiGet({ action: 'detallePedido', idPedido: ultimoPedidoId });
+    const detalle = res.ok ? res.data : [];
+    // Construir ticket local
+    const items = Object.values(carrito).length ? Object.values(carrito) : detalle.map(d => ({
+      prod: { Nombre: d.Nombre_Producto, Presentacion: d.Presentacion, Precio: d.Precio_Unit },
+      cantidad: d.Cantidad
+    }));
+    const total = items.reduce((s, i) => s + i.cantidad * Number(i.prod.Precio || i.prod.Precio_Unit || 0), 0);
+
+    cont.innerHTML = `<div class="ticket-wrap"><div class="ticket">
+      <div class="t-center">
+        <div class="t-biz">VDL DISTRIBUIDORA</div>
+        <div>Distribución mayorista</div>
+        <div>Tel: 341-4000000</div>
+        <div style="margin-top:5px;font-weight:700;">NOTA #${String(ultimoPedidoId).padStart(4,'0')}</div>
+      </div>
+      <div class="t-hr"></div>
+      <div class="t-row"><span class="t-lbl">Fecha:</span><span>${fechaHoyStr()}</span></div>
+      <div class="t-row"><span class="t-lbl">Vendedor:</span><span>${usuario.nombre}</span></div>
+      <div class="t-hr"></div>
+      <div class="t-row"><span class="t-lbl">Cliente:</span><span>${clienteActual?.Nombre || '-'}</span></div>
+      <div class="t-row"><span class="t-lbl">Dirección:</span><span>${clienteActual?.Direccion || ''}</span></div>
+      <div class="t-hr"></div>
+      ${items.map(i => `<div class="t-item">
+        <b>${i.prod.Nombre} ${i.prod.Presentacion}</b>
+        <div class="t-item-det"><span>${i.cantidad} u. × ${formatPesos(Number(i.prod.Precio))}</span><span>${formatPesos(i.cantidad * Number(i.prod.Precio))}</span></div>
+      </div>`).join('')}
+      <div class="t-total"><span>TOTAL</span><span>${formatPesos(total)}</span></div>
+      <div class="t-hr"></div>
+      <div class="t-row"><span class="t-lbl">Pago:</span><span>${formatFormaPago(formaPago)}</span></div>
+      <div class="t-footer"><p>¡Gracias por su compra!</p><p>— VDL Distribuidora —</p></div>
+    </div></div>`;
+  } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error al generar ticket</p></div>'; }
+}
+
+function imprimirTicket() { window.print(); }
+
+// ══════════════════════════════════════════════════════════
+// PEDIDOS LISTA
+// ══════════════════════════════════════════════════════════
+async function cargarPedidos() {
+  const cont = document.getElementById('lista-pedidos');
+  cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
+  try {
+    const res = await apiGet({ action: 'pedidos', idUsuario: usuario.id, rol: usuario.rol });
+    const pedidos = res.ok ? res.data.slice().reverse() : [];
+    if (!pedidos.length) { cont.innerHTML = '<div class="empty"><i class="ti ti-list"></i><p>Sin pedidos</p></div>'; return; }
+    cont.innerHTML = pedidos.map((p, i) => `
+      <div class="list-item" style="padding:10px 0;">
+        <div class="li-left">
+          <div class="avatar ${['av-az','av-gr','av-am','av-ro'][i%4]}">${iniciales(p.Nombre_Cliente)}</div>
+          <div>
+            <div class="li-name">${p.Nombre_Cliente}</div>
+            <div class="li-sub">#${String(p.ID_Pedido).padStart(4,'0')} · ${p.Fecha} · ${p.Nombre_Vendedor}</div>
+          </div>
+        </div>
+        <div class="li-right">
+          <div class="li-price">${formatPesos(Number(p.Total))}</div>
+          <span class="badge ${badgeFormaPago(p.Forma_Pago)}">${formatFormaPago(p.Forma_Pago)}</span>
+        </div>
+      </div>`).join('');
+  } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error al cargar</p></div>'; }
+}
+
+// ══════════════════════════════════════════════════════════
+// PRODUCTOS LISTA (consulta)
+// ══════════════════════════════════════════════════════════
+async function cargarProductosLista() {
+  const cont = document.getElementById('lista-productos-vista');
+  cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
+  try {
+    const res = await apiGet({ action: 'productos' });
+    productos = res.ok ? res.data : [];
+    renderProductosLista(productos);
+    // Cargar select de devolución
+    const selProd = document.getElementById('dev-producto');
+    selProd.innerHTML = productos.map(p => `<option value="${p.ID_Producto}">${p.Nombre} — ${p.Presentacion}</option>`).join('');
+  } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error</p></div>'; }
+}
+
+function renderProductosLista(lista) {
+  const cont = document.getElementById('lista-productos-vista');
+  const cats = [...new Set(lista.map(p => p.Categoria || 'General'))];
+  cont.innerHTML = cats.map(cat => {
+    const prods = lista.filter(p => (p.Categoria || 'General') === cat);
+    return `<div class="divider">${cat}</div>
+    <div class="card" style="padding:8px 14px;margin-bottom:10px;">
+      ${prods.map(p => {
+        const s = Number(p.Stock_Actual);
+        const cls = s < 0 ? 'sf-danger' : s < 10 ? 'sf-warn' : 'sf-ok';
+        const pct = Math.max(0, Math.min(100, s / 200 * 100));
+        const col = s < 0 ? 'var(--rojo)' : s < 10 ? 'var(--amber)' : 'var(--gris-5)';
+        return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--gris-2);">
+          <div style="flex:1;min-width:0;">
+            <div class="li-name">${p.Nombre} — ${p.Presentacion}</div>
+            <div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:13px;font-weight:700;color:var(--azul)">${formatPesos(Number(p.Precio))}</div>
+            <div style="font-size:11px;color:${col};">Stock: ${s}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+function filtrarProductosLista(q) {
+  const filtrados = productos.filter(p => p.Nombre.toLowerCase().includes(q.toLowerCase()));
+  renderProductosLista(filtrados);
+}
+
+// ══════════════════════════════════════════════════════════
+// DEVOLUCIÓN
+// ══════════════════════════════════════════════════════════
+async function cargarPedidosDevolucion() {
+  const idCliente = document.getElementById('dev-cliente').value;
+  try {
+    const res = await apiGet({ action: 'pedidos', idUsuario: usuario.id, rol: usuario.rol });
+    const pedidos = res.ok ? res.data.filter(p => Number(p.ID_Cliente) === Number(idCliente)) : [];
+    const sel = document.getElementById('dev-pedido');
+    sel.innerHTML = '<option value="">Sin pedido de referencia</option>' +
+      pedidos.map(p => `<option value="${p.ID_Pedido}">#${String(p.ID_Pedido).padStart(4,'0')} · ${p.Fecha}</option>`).join('');
+  } catch(e) {}
+}
+
+async function confirmarDevolucion() {
+  const idCliente  = document.getElementById('dev-cliente').value;
+  const idPedido   = document.getElementById('dev-pedido').value;
+  const idProducto = document.getElementById('dev-producto').value;
+  const cantidad   = document.getElementById('dev-cantidad').value;
+  const motivo     = document.getElementById('dev-motivo').value;
+  const err        = document.getElementById('dev-error');
+  err.style.display = 'none';
+
+  if (!cantidad || Number(cantidad) < 1) { mostrarError(err, 'La cantidad debe ser mayor a 0'); return; }
+
+  try {
+    const res = await apiPost({ action: 'registrarDevolucion', idUsuario: usuario.id, idCliente, idPedidoOrigen: idPedido, idProducto, cantidad: Number(cantidad), motivo });
+    if (!res.ok) { mostrarError(err, res.error); return; }
+    alert('✓ Devolución registrada. Stock actualizado.');
+    irInicio();
+  } catch(e) { mostrarError(err, 'Error de conexión'); }
+}
+
+// ══════════════════════════════════════════════════════════
+// ADMIN HOME
+// ══════════════════════════════════════════════════════════
+async function cargarAdminHome() {
+  document.getElementById('admin-fecha').textContent = fechaHoy();
+  try {
+    const [resPed, resCC] = await Promise.all([
+      apiGet({ action: 'pedidos', idUsuario: usuario.id, rol: 'ADMIN' }),
+      apiGet({ action: 'cuentasCorrientes' }),
+    ]);
+
+    const hoy = fechaHoyStr();
+    const pedidosHoy = resPed.ok ? resPed.data.filter(p => p.Fecha === hoy) : [];
+    const totalHoy   = pedidosHoy.reduce((s, p) => s + Number(p.Total || 0), 0);
+    document.getElementById('a-pedidos-hoy').textContent = pedidosHoy.length;
+    document.getElementById('a-total-hoy').textContent   = formatPesos(totalHoy);
+
+    const ccs = resCC.ok ? resCC.data : [];
+    const ccAlertas = ccs.filter(c => Number(c.Saldo_Deudor) > LIMITE_CC * 0.75).length;
+    document.getElementById('a-cc-alertas').textContent = ccAlertas;
+
+    document.getElementById('a-notas-badge').textContent = pedidosHoy.length;
+    const notasLista = document.getElementById('a-notas-lista');
+    if (!pedidosHoy.length) {
+      notasLista.innerHTML = '<div class="empty"><i class="ti ti-inbox"></i><p>Sin notas hoy</p></div>';
+    } else {
+      notasLista.innerHTML = pedidosHoy.slice(0, 4).map(p => `
+        <div class="nota-nueva" onclick="abrirDetallePedido(${p.ID_Pedido})">
+          <div class="nn-title">${p.Nombre_Cliente} <span class="badge ${badgeFormaPago(p.Forma_Pago)}">${formatFormaPago(p.Forma_Pago)}</span></div>
+          <div class="nn-sub">${p.Nombre_Vendedor} · ${p.Fecha}</div>
+          <div class="nn-total">${formatPesos(Number(p.Total))}</div>
+        </div>`).join('');
+    }
+
+    // Stock alertas
+    const resProd = await apiGet({ action: 'productos' });
+    const prods = resProd.ok ? resProd.data : [];
+    const stockAlerta = prods.filter(p => Number(p.Stock_Actual) < Number(p.Stock_Minimo || 10)).length;
+    document.getElementById('a-stock-alertas').textContent = stockAlerta;
+
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════
+// ADMIN PEDIDOS
+// ══════════════════════════════════════════════════════════
+async function cargarAdminPedidos() {
+  const cont = document.getElementById('a-lista-pedidos');
+  cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
+  try {
+    const res = await apiGet({ action: 'pedidos', idUsuario: usuario.id, rol: 'ADMIN' });
+    const pedidos = res.ok ? res.data.slice().reverse() : [];
+    document.getElementById('a-pedidos-sub').textContent = pedidos.length + ' pedidos';
+    if (!pedidos.length) { cont.innerHTML = '<div class="empty"><i class="ti ti-list"></i><p>Sin pedidos</p></div>'; return; }
+
+    // Agrupar por vendedor
+    const vendedores = [...new Set(pedidos.map(p => p.Nombre_Vendedor))];
+    cont.innerHTML = vendedores.map(v => {
+      const peds = pedidos.filter(p => p.Nombre_Vendedor === v);
+      return `<div class="divider">${v}</div>
+      <div class="card" style="padding:8px 14px;margin-bottom:10px;">
+        ${peds.map((p, i) => `
+          <div class="list-item" onclick="abrirDetallePedido(${p.ID_Pedido})">
+            <div class="li-left">
+              <div class="avatar ${['av-az','av-gr','av-am','av-ro'][i%4]}">${iniciales(p.Nombre_Cliente)}</div>
+              <div>
+                <div class="li-name">${p.Nombre_Cliente}</div>
+                <div class="li-sub">#${String(p.ID_Pedido).padStart(4,'0')} · ${p.Fecha}</div>
+              </div>
+            </div>
+            <div class="li-right">
+              <div class="li-price">${formatPesos(Number(p.Total))}</div>
+              <span class="badge ${badgeFormaPago(p.Forma_Pago)}">${formatFormaPago(p.Forma_Pago)}</span>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    }).join('');
+  } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error</p></div>'; }
+}
+
+async function abrirDetallePedido(idPedido) {
+  ultimoPedidoId = idPedido;
+  const cont = document.getElementById('a-detalle-contenido');
+  document.getElementById('a-detalle-titulo').textContent = 'Pedido #' + String(idPedido).padStart(4,'0');
+  cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
+  ir('a-detalle-pedido');
+  try {
+    const [resPed, resDet] = await Promise.all([
+      apiGet({ action: 'pedidos', idUsuario: usuario.id, rol: 'ADMIN' }),
+      apiGet({ action: 'detallePedido', idPedido }),
+    ]);
+    const pedido  = resPed.ok ? resPed.data.find(p => Number(p.ID_Pedido) === Number(idPedido)) : null;
+    const detalle = resDet.ok ? resDet.data : [];
+    if (!pedido) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>No encontrado</p></div>'; return; }
+
+    // Restaurar carrito para ticket
+    clienteActual = clientes.find(c => Number(c.ID_Cliente) === Number(pedido.ID_Cliente)) ||
+                    { Nombre: pedido.Nombre_Cliente, Direccion: '-' };
+    formaPago = pedido.Forma_Pago;
+    carrito = {};
+    detalle.forEach(d => {
+      carrito[d.ID_Producto] = {
+        prod: { Nombre: d.Nombre_Producto, Presentacion: d.Presentacion, Precio: d.Precio_Unit },
+        cantidad: Number(d.Cantidad)
+      };
+    });
+
+    document.getElementById('a-detalle-sub').textContent = pedido.Nombre_Cliente;
+
+    const total = detalle.reduce((s, d) => s + Number(d.Subtotal), 0);
+    cont.innerHTML = `
+      <div class="card" style="padding:10px 14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span style="color:var(--gris-6)">Fecha</span><span style="font-weight:600;">${pedido.Fecha}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span style="color:var(--gris-6)">Vendedor</span><span style="font-weight:600;">${pedido.Nombre_Vendedor}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span style="color:var(--gris-6)">Cliente</span><span style="font-weight:600;">${pedido.Nombre_Cliente}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span style="color:var(--gris-6)">Pago</span><span class="badge ${badgeFormaPago(pedido.Forma_Pago)}">${formatFormaPago(pedido.Forma_Pago)}</span></div>
+      </div>
+      <div class="divider">Detalle</div>
+      <div class="card" style="padding:8px 14px;">
+        ${detalle.map(d => `
+          <div class="list-item">
+            <div class="li-left"><div><div class="li-name">${d.Nombre_Producto} ${d.Presentacion}</div><div class="li-sub">${d.Cantidad} u. × ${formatPesos(Number(d.Precio_Unit))}</div></div></div>
+            <div class="li-right"><div class="li-price">${formatPesos(Number(d.Subtotal))}</div></div>
+          </div>`).join('')}
+      </div>
+      <div class="card" style="padding:10px 14px;">
+        <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;color:var(--azul-osc);"><span>Total</span><span>${formatPesos(total)}</span></div>
+      </div>`;
+  } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error</p></div>'; }
+}
+
+// ══════════════════════════════════════════════════════════
+// ADMIN CC
+// ══════════════════════════════════════════════════════════
+async function cargarAdminCC() {
+  const cont = document.getElementById('a-cc-lista');
+  cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
+  try {
+    const res = await apiGet({ action: 'cuentasCorrientes' });
+    const ccs = res.ok ? res.data : [];
+    if (!ccs.length) { cont.innerHTML = '<div class="empty"><i class="ti ti-credit-card"></i><p>Sin datos</p></div>'; return; }
+    cont.innerHTML = ccs.map(cc => {
+      const saldo = Number(cc.Saldo_Deudor);
+      const pct   = Math.min(100, Math.round(saldo / LIMITE_CC * 100));
+      const superado = saldo > LIMITE_CC;
+      const cerca    = saldo > LIMITE_CC * 0.75;
+      const cls = superado ? 'danger' : cerca ? 'warn' : '';
+      const colSaldo = superado ? 'var(--rojo)' : cerca ? 'var(--amber)' : 'var(--verde)';
+      return `<div class="cc-card ${cls}">
+        <div class="cc-card-head">
+          <div>
+            <div class="cc-nombre">${cc.Nombre_Cliente}</div>
+            <div style="font-size:11px;color:var(--gris-5);">Últ. mov: ${cc.Ultima_Actualizacion || '-'}</div>
+          </div>
+          <span class="badge ${superado?'b-peligro':cerca?'b-pend':'b-ok'}">${cc.Estado}</span>
+        </div>
+        <div style="font-size:17px;font-weight:800;color:${colSaldo};margin-bottom:4px;">${formatPesos(saldo)} deudor</div>
+        <div class="progress-bar"><div class="progress-fill ${superado?'pf-danger':cerca?'pf-warn':'pf-ok'}" style="width:${pct}%"></div></div>
+        <div class="cc-limits"><span>$0</span><span>Límite ${formatPesos(LIMITE_CC)}</span></div>
+        <div class="cc-card-actions">
+          <button class="btn btn-success btn-sm" onclick="abrirCobro(${cc.ID_Cliente},'${cc.Nombre_Cliente}',${saldo})">
+            <i class="ti ti-cash"></i> Registrar pago
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="verMovCC(${cc.ID_Cliente},'${cc.Nombre_Cliente}',${saldo})">
+            <i class="ti ti-history"></i> Movimientos
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error</p></div>'; }
+}
+
+function abrirCobro(idCliente, nombre, saldo) {
+  document.getElementById('cobro-cliente-nombre').textContent = nombre;
+  document.getElementById('cobro-saldo-actual').textContent   = formatPesos(saldo);
+  document.getElementById('cobro-importe').value = '';
+  document.getElementById('cobro-obs').value = '';
+  document.getElementById('cobro-error').style.display = 'none';
+  window._cobroClienteId = idCliente;
+  ir('a-cobro');
+}
+
+async function confirmarCobro() {
+  const importe = Number(document.getElementById('cobro-importe').value);
+  const forma   = document.getElementById('cobro-forma').value;
+  const obs     = document.getElementById('cobro-obs').value;
+  const err     = document.getElementById('cobro-error');
+  err.style.display = 'none';
+  if (!importe || importe <= 0) { mostrarError(err, 'Ingresá un importe válido'); return; }
+  try {
+    const res = await apiPost({ action: 'registrarPagoCC', idCliente: window._cobroClienteId, importe, formaCobro: forma, observaciones: obs, idUsuario: usuario.id });
+    if (!res.ok) { mostrarError(err, res.error); return; }
+    alert('✓ Cobro registrado correctamente');
+    cargarAdminCC();
+    ir('a-cc');
+  } catch(e) { mostrarError(err, 'Error de conexión'); }
+}
+
+async function verMovCC(idCliente, nombre, saldo) {
+  document.getElementById('movcc-cliente-nombre').textContent = nombre;
+  document.getElementById('movcc-saldo').textContent = formatPesos(saldo);
+  const cont = document.getElementById('a-movcc-lista');
+  cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
+  ir('a-movcc');
+  try {
+    const res = await apiGet({ action: 'movimientosCC', idCliente });
+    const movs = res.ok ? res.data : [];
+    if (!movs.length) { cont.innerHTML = '<div class="empty"><i class="ti ti-history"></i><p>Sin movimientos</p></div>'; return; }
+    cont.innerHTML = '<div class="card" style="padding:8px 14px;">' +
+      movs.map(m => `
+        <div class="mov-item">
+          <div>
+            <div class="mov-tipo ${m.Tipo === 'PAGO' ? 'mov-entrada' : 'mov-salida'}">${m.Tipo}</div>
+            <div class="mov-desc">${m.Concepto} · ${m.Nombre_Usuario} · ${m.Fecha}</div>
+          </div>
+          <div class="mov-importe ${m.Tipo === 'PAGO' ? 'mov-entrada' : 'mov-salida'}">
+            ${m.Tipo === 'PAGO' ? '-' : '+'}${formatPesos(Number(m.Importe))}
+          </div>
+        </div>`).join('') + '</div>';
+  } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error</p></div>'; }
+}
+
+// ══════════════════════════════════════════════════════════
+// ADMIN STOCK
+// ══════════════════════════════════════════════════════════
+async function cargarAdminStock() {
+  const cont = document.getElementById('a-stock-lista');
+  cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
+  try {
+    const res = await apiGet({ action: 'productos' });
+    const prods = res.ok ? res.data : [];
+    const alertas = prods.filter(p => Number(p.Stock_Actual) < Number(p.Stock_Minimo || 10));
+    const resto   = prods.filter(p => Number(p.Stock_Actual) >= Number(p.Stock_Minimo || 10));
+
+    let html = '';
+    if (alertas.length) {
+      html += '<div class="divider">Alertas de stock</div><div class="card" style="padding:8px 14px;margin-bottom:10px;">';
+      html += alertas.map(p => renderStockItem(p)).join('');
+      html += '</div>';
+    }
+    html += '<div class="divider">Todos los productos</div><div class="card" style="padding:8px 14px;">';
+    html += resto.map(p => renderStockItem(p)).join('');
+    html += '</div>';
+    cont.innerHTML = html;
+  } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error</p></div>'; }
+}
+
+function renderStockItem(p) {
+  const s = Number(p.Stock_Actual);
+  const cls = s < 0 ? 'sf-danger' : s < 10 ? 'sf-warn' : 'sf-ok';
+  const pct = Math.max(0, Math.min(100, s / 200 * 100));
+  const col = s < 0 ? 'var(--rojo)' : s < 10 ? 'var(--amber)' : 'var(--texto)';
+  return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--gris-2);">
+    <div style="flex:1;min-width:0;">
+      <div class="li-name">${p.Nombre} — ${p.Presentacion}</div>
+      <div style="font-size:11px;color:var(--gris-5);">${p.Categoria || ''}</div>
+      <div class="stock-bar"><div class="stock-fill ${cls}" style="width:${pct}%"></div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <div style="font-size:14px;font-weight:800;color:${col};min-width:32px;text-align:right;">${s}</div>
+      <div class="qty-adj">
+        <button class="qty-sm" onclick="ajustarStock(${p.ID_Producto},-1,this)">−</button>
+        <button class="qty-sm" onclick="ajustarStock(${p.ID_Producto},1,this)">+</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function ajustarStock(idProducto, delta, btn) {
+  // Buscar el span de cantidad en el mismo contenedor
+  const wrap = btn.closest('div[style*="display:flex"]');
+  const numEl = wrap.querySelector('div[style*="font-weight:800"]');
+  const actual = parseInt(numEl.textContent) || 0;
+  const nuevo = actual + delta;
+  numEl.textContent = nuevo;
+  try {
+    await apiPost({ action: 'ajusteStock', idProducto, cantidadNueva: nuevo, idUsuario: usuario.id });
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════
+// HOOKS DE PANTALLAS
+// ══════════════════════════════════════════════════════════
+const originalIr = ir;
+window.ir = function(screen) {
+  originalIr(screen);
+  switch(screen) {
+    case 's-carrito':        renderCarrito(); break;
+    case 's-pedidos':        cargarPedidos(); break;
+    case 's-productos-lista':cargarProductosLista(); break;
+    case 's-devolucion':     if (!clientes.length) cargarClientes(); break;
+    case 'a-pedidos':        cargarAdminPedidos(); break;
+    case 'a-cc':             cargarAdminCC(); break;
+    case 'a-stock':          cargarAdminStock(); break;
+  }
+};
+
+// ══════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════
+function formatPesos(n) {
+  return '$' + Math.round(n).toLocaleString('es-AR');
+}
+function formatFormaPago(fp) {
+  return { 'EFECTIVO':'Efectivo','TRANSFERENCIA':'Transfer.','CUENTA_CORRIENTE':'Cta. Cte.' }[fp] || fp;
+}
+function badgeFormaPago(fp) {
+  return { 'EFECTIVO':'b-ef','TRANSFERENCIA':'b-tr','CUENTA_CORRIENTE':'b-cc' }[fp] || 'b-azul';
+}
+function iniciales(nombre) {
+  if (!nombre) return '??';
+  return nombre.split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase();
+}
+function fechaHoy() {
+  return new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'short'});
+}
+function fechaHoyStr() {
+  const d = new Date();
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+}
+function mostrarError(el, txt) {
+  el.style.display = 'flex';
+  el.querySelector('span').textContent = txt;
+}
+
+// Enter en login
+document.getElementById('inp-password').addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>
