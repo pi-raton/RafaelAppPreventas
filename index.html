@@ -415,7 +415,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--azul);}
   <nav class="navbar">
     <button class="nav-btn active" onclick="ir('a-home')"><i class="ti ti-home"></i>Inicio</button>
     <button class="nav-btn" onclick="ir('a-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
-    <button class="nav-btn" onclick="irAClientesAdmin()"><i class="ti ti-users"></i>Clientes</button>
+    <button class="nav-btn" onclick="ir('a-clientes')"><i class="ti ti-users"></i>Clientes</button>
     <button class="nav-btn" onclick="ir('a-cc')"><i class="ti ti-credit-card"></i>Cta. Cte.</button>
     <button class="nav-btn" onclick="ir('a-stock')"><i class="ti ti-package"></i>Stock</button>
   </nav>
@@ -433,7 +433,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--azul);}
   <nav class="navbar">
     <button class="nav-btn" onclick="ir('a-home')"><i class="ti ti-home"></i>Inicio</button>
     <button class="nav-btn active" onclick="ir('a-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
-    <button class="nav-btn" onclick="irAClientesAdmin()"><i class="ti ti-users"></i>Clientes</button>
+    <button class="nav-btn" onclick="ir('a-clientes')"><i class="ti ti-users"></i>Clientes</button>
     <button class="nav-btn" onclick="ir('a-cc')"><i class="ti ti-credit-card"></i>Cta. Cte.</button>
     <button class="nav-btn" onclick="ir('a-stock')"><i class="ti ti-package"></i>Stock</button>
   </nav>
@@ -470,8 +470,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--azul);}
   <nav class="navbar">
     <button class="nav-btn" onclick="ir('a-home')"><i class="ti ti-home"></i>Inicio</button>
     <button class="nav-btn" onclick="ir('a-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
-    <button class="nav-btn" onclick="irAClientesAdmin()"><i class="ti ti-users"></i>Clientes</button>
-    <button class="nav-btn" onclick="irAClientesAdmin()"><i class="ti ti-users"></i>Clientes</button>
+    <button class="nav-btn" onclick="ir('a-clientes')"><i class="ti ti-users"></i>Clientes</button>
+    <button class="nav-btn" onclick="ir('a-clientes')"><i class="ti ti-users"></i>Clientes</button>
     <button class="nav-btn" onclick="ir('a-cc')"><i class="ti ti-credit-card"></i>Cta. Cte.</button>
     <button class="nav-btn active" onclick="ir('a-stock')"><i class="ti ti-package"></i>Stock</button>
   </nav>
@@ -500,6 +500,48 @@ input:focus,select:focus,textarea:focus{border-color:var(--azul);}
   </div>
 </div>
 
+<!-- ADMIN CLIENTES -->
+<div id="a-clientes" class="screen">
+  <div class="topbar">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h1>Clientes</h1>
+      <button onclick="abrirFormCliente(null)" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;">+ Nuevo</button>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="search-box"><i class="ti ti-search"></i><input type="text" placeholder="Buscar cliente..." oninput="filtrarAdminClientes(this.value)"></div>
+    <div id="a-clientes-lista"><div class="spinner"><i class="ti ti-loader"></i></div></div>
+  </div>
+  <nav class="navbar">
+    <button class="nav-btn" onclick="ir('a-home')"><i class="ti ti-home"></i>Inicio</button>
+    <button class="nav-btn" onclick="ir('a-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
+    <button class="nav-btn active" onclick="ir('a-clientes')"><i class="ti ti-users"></i>Clientes</button>
+    <button class="nav-btn" onclick="ir('a-cc')"><i class="ti ti-credit-card"></i>Cta. Cte.</button>
+    <button class="nav-btn" onclick="ir('a-stock')"><i class="ti ti-package"></i>Stock</button>
+  </nav>
+</div>
+
+<!-- ADMIN CLIENTE FORM -->
+<div id="a-cliente-form" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="ir('a-clientes')"><i class="ti ti-arrow-left"></i></button>
+      <div><h1 id="form-cli-titulo">Nuevo Cliente</h1></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="card">
+      <div class="field"><label class="lbl">Nombre</label><input type="text" id="fc-nombre" placeholder="Ej: Farmacia San Martín"></div>
+      <div class="field"><label class="lbl">Dirección</label><input type="text" id="fc-direccion" placeholder="Ej: Av. Corrientes 1234"></div>
+      <div class="field"><label class="lbl">Teléfono</label><input type="tel" id="fc-telefono" placeholder="Ej: 341-4001234"></div>
+      <div class="field"><label class="lbl">Email</label><input type="text" id="fc-email" placeholder="Ej: contacto@farmacia.com"></div>
+      <div id="fc-error" class="alert-box alert-danger" style="display:none;"><i class="ti ti-alert-circle"></i><span id="fc-error-txt"></span></div>
+      <button class="btn btn-primary" id="fc-btn-guardar" onclick="guardarCliente()"><i class="ti ti-check"></i> Guardar</button>
+      <button class="btn btn-secondary" onclick="ir('a-clientes')"><i class="ti ti-arrow-left"></i> Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADMIN CC -->
 <div id="a-cc" class="screen">
   <div class="topbar"><h1>Cuentas Corrientes</h1></div>
@@ -507,7 +549,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--azul);}
   <nav class="navbar">
     <button class="nav-btn" onclick="ir('a-home')"><i class="ti ti-home"></i>Inicio</button>
     <button class="nav-btn" onclick="ir('a-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
-    <button class="nav-btn" onclick="irAClientesAdmin()"><i class="ti ti-users"></i>Clientes</button>
+    <button class="nav-btn" onclick="ir('a-clientes')"><i class="ti ti-users"></i>Clientes</button>
     <button class="nav-btn active" onclick="ir('a-cc')"><i class="ti ti-credit-card"></i>Cta. Cte.</button>
     <button class="nav-btn" onclick="ir('a-stock')"><i class="ti ti-package"></i>Stock</button>
   </nav>
@@ -625,6 +667,7 @@ function ir(screen) {
     case 'a-cc':             cargarAdminCC(); break;
     case 'a-stock':          cargarAdminStock(); break;
     case 'a-productos':      cargarAdminProductos(); break;
+    case 'a-clientes':       cargarAdminClientes(); break;
   }
 }
 window.ir = ir;
@@ -1374,6 +1417,139 @@ async function ajustarStock(key, delta, btn) {
   try { await dbUpdate('vdl/productos/' + key, { stock_actual: nuevo }); } catch(e) {}
 }
 window.ajustarStock = ajustarStock;
+
+// ── ABM Clientes ─────────────────────────────────────────────
+let _todosClientesAdmin = [];
+let _clienteEditandoKey = null;
+
+async function cargarAdminClientes() {
+  const cont = document.getElementById('a-clientes-lista');
+  cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
+  try {
+    const data = await dbGet('vdl/clientes');
+    _todosClientesAdmin = objToArray(data);
+    renderAdminClientes(_todosClientesAdmin);
+  } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error</p></div>'; }
+}
+
+function renderAdminClientes(lista) {
+  const cont = document.getElementById('a-clientes-lista');
+  if (!lista.length) { cont.innerHTML = '<div class="empty"><i class="ti ti-users"></i><p>Sin clientes</p></div>'; return; }
+  const activos   = lista.filter(c => c.activo);
+  const inactivos = lista.filter(c => !c.activo);
+  let html = '';
+  if (activos.length) {
+    html += '<div class="divider">Activos (' + activos.length + ')</div><div class="card" style="padding:8px 14px;margin-bottom:10px;">';
+    html += activos.map(c => renderAdminClienteItem(c)).join('') + '</div>';
+  }
+  if (inactivos.length) {
+    html += '<div class="divider">Inactivos (' + inactivos.length + ')</div><div class="card" style="padding:8px 14px;">';
+    html += inactivos.map(c => renderAdminClienteItem(c)).join('') + '</div>';
+  }
+  cont.innerHTML = html;
+}
+
+function renderAdminClienteItem(c) {
+  const activo = c.activo;
+  return `<div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--gris-2);">
+    <div class="avatar av-az">${iniciales(c.nombre)}</div>
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div class="li-name">${c.nombre}</div>
+        <span class="badge ${activo?'b-ok':'b-peligro'}" style="font-size:9px;">${activo?'ACTIVO':'INACTIVO'}</span>
+      </div>
+      <div class="li-sub">${c.direccion||''} ${c.telefono ? '· ' + c.telefono : ''}</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-shrink:0;">
+      <button class="btn btn-sm btn-secondary" style="padding:6px 10px;" onclick="abrirFormCliente('${c._key}')"><i class="ti ti-pencil" style="font-size:14px;"></i></button>
+      <button class="btn btn-sm ${activo?'btn-danger':'btn-success'}" style="padding:6px 10px;" onclick="toggleActivoCliente('${c._key}',${activo})">
+        <i class="ti ${activo?'ti-eye-off':'ti-eye'}" style="font-size:14px;"></i>
+      </button>
+    </div>
+  </div>`;
+}
+
+function filtrarAdminClientes(q) {
+  renderAdminClientes(_todosClientesAdmin.filter(c =>
+    c.nombre.toLowerCase().includes(q.toLowerCase()) ||
+    (c.direccion||'').toLowerCase().includes(q.toLowerCase())
+  ));
+}
+window.filtrarAdminClientes = filtrarAdminClientes;
+
+function abrirFormCliente(key) {
+  _clienteEditandoKey = key;
+  const esNuevo = !key;
+  document.getElementById('form-cli-titulo').textContent = esNuevo ? 'Nuevo Cliente' : 'Editar Cliente';
+  document.getElementById('fc-error').style.display = 'none';
+  if (esNuevo) {
+    document.getElementById('fc-nombre').value    = '';
+    document.getElementById('fc-direccion').value = '';
+    document.getElementById('fc-telefono').value  = '';
+    document.getElementById('fc-email').value     = '';
+  } else {
+    const c = _todosClientesAdmin.find(x => x._key === key);
+    if (!c) return;
+    document.getElementById('fc-nombre').value    = c.nombre    || '';
+    document.getElementById('fc-direccion').value = c.direccion || '';
+    document.getElementById('fc-telefono').value  = c.telefono  || '';
+    document.getElementById('fc-email').value     = c.email     || '';
+  }
+  ir('a-cliente-form');
+}
+window.abrirFormCliente = abrirFormCliente;
+
+async function guardarCliente() {
+  const nombre    = document.getElementById('fc-nombre').value.trim();
+  const direccion = document.getElementById('fc-direccion').value.trim();
+  const telefono  = document.getElementById('fc-telefono').value.trim();
+  const email     = document.getElementById('fc-email').value.trim();
+  const err       = document.getElementById('fc-error');
+
+  if (!nombre) {
+    err.style.display = 'flex';
+    document.getElementById('fc-error-txt').textContent = 'El nombre es obligatorio';
+    return;
+  }
+  err.style.display = 'none';
+  const btn = document.getElementById('fc-btn-guardar');
+  btn.innerHTML = '<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Guardando...';
+  btn.disabled  = true;
+
+  try {
+    const data = { nombre, direccion, telefono, email, activo: true };
+    if (_clienteEditandoKey) {
+      await dbUpdate('vdl/clientes/' + _clienteEditandoKey, data);
+      // Actualizar CC si existe
+      const ccExiste = await dbGet('vdl/cuentas_corrientes/' + _clienteEditandoKey);
+      if (ccExiste) await dbUpdate('vdl/cuentas_corrientes/' + _clienteEditandoKey, { nombre });
+    } else {
+      const key = await dbPush('vdl/clientes', data);
+      // Crear CC en $0
+      await dbSet('vdl/cuentas_corrientes/' + key, {
+        id_cliente: key, nombre, saldo_deudor: 0,
+        limite: 1000000, disponible: 1000000, estado: 'AL DÍA'
+      });
+    }
+    ir('a-clientes');
+  } catch(e) {
+    err.style.display = 'flex';
+    document.getElementById('fc-error-txt').textContent = 'Error al guardar: ' + e.message;
+  }
+  btn.innerHTML = '<i class="ti ti-check"></i> Guardar';
+  btn.disabled  = false;
+}
+window.guardarCliente = guardarCliente;
+
+async function toggleActivoCliente(key, estadoActual) {
+  const accion = estadoActual ? 'desactivar' : 'activar';
+  if (!confirm('¿Querés ' + accion + ' este cliente?')) return;
+  try {
+    await dbUpdate('vdl/clientes/' + key, { activo: !estadoActual });
+    cargarAdminClientes();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+window.toggleActivoCliente = toggleActivoCliente;
 
 // ── ABM Productos ────────────────────────────────────────────
 let _todosProductosAdmin = [];
