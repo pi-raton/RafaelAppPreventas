@@ -398,9 +398,35 @@ input:focus,select:focus,textarea:focus{border-color:var(--azul);}
   </div>
   <div class="scroll">
     <div class="card">
-      <div class="field"><label class="lbl">Cliente</label><select id="dev-cliente" onchange="cargarPedidosDevolucion()"></select></div>
-      <div class="field"><label class="lbl">Pedido de origen (opcional)</label><select id="dev-pedido"><option value="">Sin pedido de referencia</option></select></div>
-      <div class="field"><label class="lbl">Producto</label><select id="dev-producto"></select></div>
+      <!-- Cliente con búsqueda -->
+      <div class="field">
+        <label class="lbl">Cliente</label>
+        <div style="position:relative;">
+          <input type="text" id="dev-cliente-input" placeholder="Buscar cliente..." oninput="filtrarDevClientes(this.value)" autocomplete="off" style="margin-bottom:4px;">
+          <div id="dev-cliente-lista" style="display:none;background:#fff;border:1px solid var(--gris-4);border-radius:var(--radio-sm);max-height:160px;overflow-y:auto;margin-bottom:8px;"></div>
+          <div id="dev-cliente-sel" style="display:none;background:var(--azul-claro);border-radius:var(--radio-sm);padding:8px 12px;font-size:13px;font-weight:600;color:var(--azul-osc);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span id="dev-cliente-sel-nombre"></span>
+            <button onclick="limpiarDevCliente()" style="background:none;border:none;color:var(--gris-5);cursor:pointer;font-size:16px;">✕</button>
+          </div>
+        </div>
+      </div>
+      <!-- Pedido origen -->
+      <div class="field">
+        <label class="lbl">Pedido de origen (opcional)</label>
+        <select id="dev-pedido"><option value="">Sin pedido de referencia</option></select>
+      </div>
+      <!-- Producto con búsqueda -->
+      <div class="field">
+        <label class="lbl">Producto</label>
+        <div style="position:relative;">
+          <input type="text" id="dev-producto-input" placeholder="Buscar producto..." oninput="filtrarDevProductos(this.value)" autocomplete="off" style="margin-bottom:4px;">
+          <div id="dev-producto-lista" style="display:none;background:#fff;border:1px solid var(--gris-4);border-radius:var(--radio-sm);max-height:160px;overflow-y:auto;margin-bottom:8px;"></div>
+          <div id="dev-producto-sel" style="display:none;background:var(--azul-claro);border-radius:var(--radio-sm);padding:8px 12px;font-size:13px;font-weight:600;color:var(--azul-osc);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span id="dev-producto-sel-nombre"></span>
+            <button onclick="limpiarDevProducto()" style="background:none;border:none;color:var(--gris-5);cursor:pointer;font-size:16px;">✕</button>
+          </div>
+        </div>
+      </div>
       <div class="field"><label class="lbl">Cantidad a devolver</label><input type="number" id="dev-cantidad" value="1" min="1"></div>
       <div class="field"><label class="lbl">Motivo</label><input type="text" id="dev-motivo" placeholder="Ej: producto vencido..."></div>
       <div id="dev-error" class="alert-box alert-danger" style="display:none;"><i class="ti ti-alert-circle"></i><span id="dev-error-txt"></span></div>
@@ -686,6 +712,7 @@ function ir(screen) {
     case 's-carrito':        renderCarrito(); break;
     case 's-pedidos':        cargarPedidos(); break;
     case 's-productos-lista':cargarProductosLista(); break;
+    case 's-devolucion':     iniciarDevolucion(); break;
     case 'a-pedidos':        cargarAdminPedidos(); break;
     case 'a-cc':             cargarAdminCC(); break;
     case 'a-stock':          cargarAdminStock(); break;
@@ -1204,29 +1231,131 @@ function filtrarProductosLista(q) {
 window.filtrarProductosLista = filtrarProductosLista;
 
 // ── Devolución ───────────────────────────────────────────────
-async function cargarPedidosDevolucion() {
-  const idCliente = document.getElementById('dev-cliente').value;
+let _devClienteKey   = null;
+let _devProductoKey  = null;
+let _devClientes     = [];
+let _devProductos    = [];
+
+async function iniciarDevolucion() {
+  // Limpiar estado
+  _devClienteKey  = null;
+  _devProductoKey = null;
+  document.getElementById('dev-cliente-input').value   = '';
+  document.getElementById('dev-producto-input').value  = '';
+  document.getElementById('dev-cliente-lista').style.display  = 'none';
+  document.getElementById('dev-producto-lista').style.display = 'none';
+  document.getElementById('dev-cliente-sel').style.display    = 'none';
+  document.getElementById('dev-producto-sel').style.display   = 'none';
+  document.getElementById('dev-cantidad').value = '1';
+  document.getElementById('dev-motivo').value   = '';
+  document.getElementById('dev-error').style.display = 'none';
+  document.getElementById('dev-pedido').innerHTML = '<option value="">Sin pedido de referencia</option>';
+
+  // Cargar datos si no están cargados
   try {
-    const data = await dbGet('vdl/pedidos');
-    const pedidos = objToArray(data).filter(p => p.id_cliente === idCliente);
-    const sel = document.getElementById('dev-pedido');
-    sel.innerHTML = '<option value="">Sin pedido de referencia</option>' +
-      pedidos.map(p => `<option value="${p._key}">${p.fecha} · ${p.nombre_cliente}</option>`).join('');
+    if (!_devClientes.length) {
+      const data = await dbGet('vdl/clientes');
+      _devClientes = objToArray(data).filter(c => c.activo);
+    }
+    if (!_devProductos.length) {
+      const data = await dbGet('vdl/productos');
+      _devProductos = objToArray(data).filter(p => p.activo);
+    }
   } catch(e) {}
 }
-window.cargarPedidosDevolucion = cargarPedidosDevolucion;
+
+function filtrarDevClientes(q) {
+  const lista = document.getElementById('dev-cliente-lista');
+  if (!q) { lista.style.display = 'none'; return; }
+  const filtrados = _devClientes.filter(c => c.nombre.toLowerCase().includes(q.toLowerCase()));
+  if (!filtrados.length) { lista.style.display = 'none'; return; }
+  lista.style.display = 'block';
+  lista.innerHTML = filtrados.map(c => `
+    <div onclick="seleccionarDevCliente('${c._key}','${c.nombre.replace(/'/g,"\\'")}','${c.nombre.replace(/'/g,"\\'")}' )"
+      style="padding:10px 12px;border-bottom:1px solid var(--gris-2);font-size:13px;cursor:pointer;">
+      <div style="font-weight:600;">${c.nombre}</div>
+      <div style="font-size:11px;color:var(--gris-5);">${c.direccion||''}</div>
+    </div>`).join('');
+}
+window.filtrarDevClientes = filtrarDevClientes;
+
+async function seleccionarDevCliente(key, nombre) {
+  _devClienteKey = key;
+  document.getElementById('dev-cliente-input').value  = '';
+  document.getElementById('dev-cliente-lista').style.display = 'none';
+  document.getElementById('dev-cliente-sel-nombre').textContent = nombre;
+  document.getElementById('dev-cliente-sel').style.display = 'flex';
+  // Cargar pedidos del cliente
+  try {
+    const data    = await dbGet('vdl/pedidos');
+    const pedidos = objToArray(data).filter(p => p.id_cliente === key);
+    const sel     = document.getElementById('dev-pedido');
+    sel.innerHTML = '<option value="">Sin pedido de referencia</option>' +
+      pedidos.reverse().map(p => `<option value="${p._key}">${p.fecha} · ${formatPesos(Number(p.total))}</option>`).join('');
+  } catch(e) {}
+}
+window.seleccionarDevCliente = seleccionarDevCliente;
+
+function limpiarDevCliente() {
+  _devClienteKey = null;
+  document.getElementById('dev-cliente-input').value = '';
+  document.getElementById('dev-cliente-sel').style.display = 'none';
+  document.getElementById('dev-pedido').innerHTML = '<option value="">Sin pedido de referencia</option>';
+}
+window.limpiarDevCliente = limpiarDevCliente;
+
+function filtrarDevProductos(q) {
+  const lista = document.getElementById('dev-producto-lista');
+  if (!q) { lista.style.display = 'none'; return; }
+  const filtrados = _devProductos.filter(p =>
+    p.nombre.toLowerCase().includes(q.toLowerCase()) ||
+    (p.presentacion||'').toLowerCase().includes(q.toLowerCase())
+  );
+  if (!filtrados.length) { lista.style.display = 'none'; return; }
+  lista.style.display = 'block';
+  lista.innerHTML = filtrados.map(p => `
+    <div onclick="seleccionarDevProducto('${p._key}','${(p.nombre+' '+p.presentacion).replace(/'/g,"\\'")}' )"
+      style="padding:10px 12px;border-bottom:1px solid var(--gris-2);font-size:13px;cursor:pointer;">
+      <div style="font-weight:600;">${p.nombre}</div>
+      <div style="font-size:11px;color:var(--gris-5);">${p.presentacion} · ${formatPesos(Number(p.precio))}</div>
+    </div>`).join('');
+}
+window.filtrarDevProductos = filtrarDevProductos;
+
+function seleccionarDevProducto(key, nombre) {
+  _devProductoKey = key;
+  document.getElementById('dev-producto-input').value  = '';
+  document.getElementById('dev-producto-lista').style.display = 'none';
+  document.getElementById('dev-producto-sel-nombre').textContent = nombre;
+  document.getElementById('dev-producto-sel').style.display = 'flex';
+}
+window.seleccionarDevProducto = seleccionarDevProducto;
+
+function limpiarDevProducto() {
+  _devProductoKey = null;
+  document.getElementById('dev-producto-input').value = '';
+  document.getElementById('dev-producto-sel').style.display = 'none';
+}
+window.limpiarDevProducto = limpiarDevProducto;
+
+async function cargarPedidosDevolucion() {}  // ya no se usa
 
 async function confirmarDevolucion() {
-  const idCliente  = document.getElementById('dev-cliente').value;
+  const idCliente  = _devClienteKey;
+  const idProducto = _devProductoKey;
   const idPedido   = document.getElementById('dev-pedido').value;
-  const idProducto = document.getElementById('dev-producto').value;
   const cantidad   = Number(document.getElementById('dev-cantidad').value);
   const motivo     = document.getElementById('dev-motivo').value;
   const err        = document.getElementById('dev-error');
-  if (!idProducto || !cantidad) { mostrarError(err, 'Completá todos los campos'); return; }
+
+  if (!idCliente)  { err.style.display='flex'; document.getElementById('dev-error-txt').textContent='Seleccioná un cliente'; return; }
+  if (!idProducto) { err.style.display='flex'; document.getElementById('dev-error-txt').textContent='Seleccioná un producto'; return; }
+  if (!cantidad)   { err.style.display='flex'; document.getElementById('dev-error-txt').textContent='Ingresá la cantidad'; return; }
+  err.style.display = 'none';
+
   try {
-    const prod = productos.find(p => p._key === idProducto);
-    const cli  = clientes.find(c => c._key === idCliente);
+    const prod = _devProductos.find(p => p._key === idProducto);
+    const cli  = _devClientes.find(c => c._key === idCliente);
     await dbPush('vdl/devoluciones', {
       fecha: fechaHoyStr(), id_pedido_origen: idPedido||'',
       id_usuario: usuario._key, nombre_usuario: usuario.nombre,
@@ -1236,13 +1365,18 @@ async function confirmarDevolucion() {
       precio: Number(prod?.precio||0), subtotal: cantidad*Number(prod?.precio||0),
       motivo
     });
-    // Devolver stock (lee el valor actual de Firebase)
+    // Devolver stock
     const prodActual  = await dbGet('vdl/productos/' + idProducto);
-    const stockActual = Number(prodActual?.stock_actual || 0);
+    const stockActual = Number(prodActual?.stock_actual||0);
     await dbUpdate('vdl/productos/' + idProducto, { stock_actual: stockActual + cantidad });
+    // Limpiar cache para recargar próxima vez
+    _devProductos = [];
     alert('✓ Devolución registrada correctamente');
     irAtras();
-  } catch(e) { mostrarError(err, 'Error: ' + e.message); }
+  } catch(e) {
+    err.style.display='flex';
+    document.getElementById('dev-error-txt').textContent = 'Error: ' + e.message;
+  }
 }
 window.confirmarDevolucion = confirmarDevolucion;
 
