@@ -452,6 +452,49 @@ input:focus,select:focus,textarea:focus{border-color:var(--azul);}
   </div>
 </div>
 
+<!-- ADMIN PRODUCTOS -->
+<div id="a-productos" class="screen">
+  <div class="topbar">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h1>Productos</h1>
+      <button onclick="abrirFormProducto(null)" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;">+ Nuevo</button>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="search-box"><i class="ti ti-search"></i><input type="text" placeholder="Buscar producto..." oninput="filtrarAdminProductos(this.value)"></div>
+    <div id="a-productos-lista"><div class="spinner"><i class="ti ti-loader"></i></div></div>
+  </div>
+  <nav class="navbar">
+    <button class="nav-btn" onclick="ir('a-home')"><i class="ti ti-home"></i>Inicio</button>
+    <button class="nav-btn" onclick="ir('a-pedidos')"><i class="ti ti-list"></i>Pedidos</button>
+    <button class="nav-btn" onclick="ir('a-cc')"><i class="ti ti-credit-card"></i>Cta. Cte.</button>
+    <button class="nav-btn active" onclick="ir('a-stock')"><i class="ti ti-package"></i>Stock</button>
+  </nav>
+</div>
+
+<!-- ADMIN PRODUCTO FORM -->
+<div id="a-producto-form" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="ir('a-productos')"><i class="ti ti-arrow-left"></i></button>
+      <div><h1 id="form-prod-titulo">Nuevo Producto</h1></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="card">
+      <div class="field"><label class="lbl">Nombre</label><input type="text" id="fp-nombre" placeholder="Ej: Actron 400"></div>
+      <div class="field"><label class="lbl">Presentación</label><input type="text" id="fp-presentacion" placeholder="Ej: Caja x2"></div>
+      <div class="field"><label class="lbl">Precio</label><input type="number" id="fp-precio" placeholder="0"></div>
+      <div class="field"><label class="lbl">Stock actual</label><input type="number" id="fp-stock" placeholder="0"></div>
+      <div class="field"><label class="lbl">Stock mínimo</label><input type="number" id="fp-stock-min" placeholder="10"></div>
+      <div class="field"><label class="lbl">Categoría</label><input type="text" id="fp-categoria" placeholder="Ej: Farmacia"></div>
+      <div id="fp-error" class="alert-box alert-danger" style="display:none;"><i class="ti ti-alert-circle"></i><span id="fp-error-txt"></span></div>
+      <button class="btn btn-primary" id="fp-btn-guardar" onclick="guardarProducto()"><i class="ti ti-check"></i> Guardar</button>
+      <button class="btn btn-secondary" onclick="ir('a-productos')"><i class="ti ti-arrow-left"></i> Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADMIN CC -->
 <div id="a-cc" class="screen">
   <div class="topbar"><h1>Cuentas Corrientes</h1></div>
@@ -501,7 +544,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--azul);}
 
 <!-- ADMIN STOCK -->
 <div id="a-stock" class="screen">
-  <div class="topbar"><h1>Control de Stock</h1></div>
+  <div class="topbar">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h1>Control de Stock</h1>
+      <button onclick="ir('a-productos')" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;">ABM</button>
+    </div>
+  </div>
   <div class="scroll"><div id="a-stock-lista"><div class="spinner"><i class="ti ti-loader"></i></div></div></div>
   <nav class="navbar">
     <button class="nav-btn" onclick="ir('a-home')"><i class="ti ti-home"></i>Inicio</button>
@@ -570,6 +618,7 @@ function ir(screen) {
     case 'a-pedidos':        cargarAdminPedidos(); break;
     case 'a-cc':             cargarAdminCC(); break;
     case 'a-stock':          cargarAdminStock(); break;
+    case 'a-productos':      cargarAdminProductos(); break;
   }
 }
 window.ir = ir;
@@ -1262,6 +1311,137 @@ async function ajustarStock(key, delta, btn) {
   try { await dbUpdate('vdl/productos/' + key, { stock_actual: nuevo }); } catch(e) {}
 }
 window.ajustarStock = ajustarStock;
+
+// ── ABM Productos ────────────────────────────────────────────
+let _todosProductosAdmin = [];
+let _productoEditandoKey  = null;
+
+async function cargarAdminProductos() {
+  const cont = document.getElementById('a-productos-lista');
+  cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
+  try {
+    const data = await dbGet('vdl/productos');
+    _todosProductosAdmin = objToArray(data);
+    renderAdminProductos(_todosProductosAdmin);
+  } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error</p></div>'; }
+}
+
+function renderAdminProductos(lista) {
+  const cont = document.getElementById('a-productos-lista');
+  if (!lista.length) { cont.innerHTML = '<div class="empty"><i class="ti ti-package"></i><p>Sin productos</p></div>'; return; }
+  const activos    = lista.filter(p => p.activo);
+  const inactivos  = lista.filter(p => !p.activo);
+  let html = '';
+  if (activos.length) {
+    html += '<div class="divider">Activos (' + activos.length + ')</div><div class="card" style="padding:8px 14px;margin-bottom:10px;">';
+    html += activos.map(p => renderAdminProdItem(p)).join('') + '</div>';
+  }
+  if (inactivos.length) {
+    html += '<div class="divider">Inactivos (' + inactivos.length + ')</div><div class="card" style="padding:8px 14px;">';
+    html += inactivos.map(p => renderAdminProdItem(p)).join('') + '</div>';
+  }
+  cont.innerHTML = html;
+}
+
+function renderAdminProdItem(p) {
+  const activo = p.activo;
+  return `<div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--gris-2);">
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div class="li-name">${p.nombre}</div>
+        <span class="badge ${activo ? 'b-ok' : 'b-peligro'}" style="font-size:9px;">${activo ? 'ACTIVO' : 'INACTIVO'}</span>
+      </div>
+      <div class="li-sub">${p.presentacion} · ${formatPesos(Number(p.precio))} · Stock: ${p.stock_actual}</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-shrink:0;">
+      <button class="btn btn-sm btn-secondary" style="padding:6px 10px;" onclick="abrirFormProducto('${p._key}')"><i class="ti ti-pencil" style="font-size:14px;"></i></button>
+      <button class="btn btn-sm ${activo ? 'btn-danger' : 'btn-success'}" style="padding:6px 10px;" onclick="toggleActivoProducto('${p._key}',${activo})">
+        <i class="ti ${activo ? 'ti-eye-off' : 'ti-eye'}" style="font-size:14px;"></i>
+      </button>
+    </div>
+  </div>`;
+}
+
+function filtrarAdminProductos(q) {
+  const filtrados = _todosProductosAdmin.filter(p =>
+    p.nombre.toLowerCase().includes(q.toLowerCase()) ||
+    (p.presentacion||'').toLowerCase().includes(q.toLowerCase())
+  );
+  renderAdminProductos(filtrados);
+}
+window.filtrarAdminProductos = filtrarAdminProductos;
+
+function abrirFormProducto(key) {
+  _productoEditandoKey = key;
+  const esNuevo = !key;
+  document.getElementById('form-prod-titulo').textContent = esNuevo ? 'Nuevo Producto' : 'Editar Producto';
+  document.getElementById('fp-error').style.display = 'none';
+  if (esNuevo) {
+    document.getElementById('fp-nombre').value       = '';
+    document.getElementById('fp-presentacion').value = '';
+    document.getElementById('fp-precio').value       = '';
+    document.getElementById('fp-stock').value        = '0';
+    document.getElementById('fp-stock-min').value    = '10';
+    document.getElementById('fp-categoria').value    = '';
+  } else {
+    const p = _todosProductosAdmin.find(x => x._key === key);
+    if (!p) return;
+    document.getElementById('fp-nombre').value       = p.nombre       || '';
+    document.getElementById('fp-presentacion').value = p.presentacion || '';
+    document.getElementById('fp-precio').value       = p.precio       || '';
+    document.getElementById('fp-stock').value        = p.stock_actual || 0;
+    document.getElementById('fp-stock-min').value    = p.stock_minimo || 10;
+    document.getElementById('fp-categoria').value    = p.categoria    || '';
+  }
+  ir('a-producto-form');
+}
+window.abrirFormProducto = abrirFormProducto;
+
+async function guardarProducto() {
+  const nombre       = document.getElementById('fp-nombre').value.trim();
+  const presentacion = document.getElementById('fp-presentacion').value.trim();
+  const precio       = parseFloat(document.getElementById('fp-precio').value) || 0;
+  const stock        = parseInt(document.getElementById('fp-stock').value)    || 0;
+  const stockMin     = parseInt(document.getElementById('fp-stock-min').value)|| 10;
+  const categoria    = document.getElementById('fp-categoria').value.trim()   || 'General';
+  const err          = document.getElementById('fp-error');
+
+  if (!nombre || !presentacion || !precio) {
+    err.style.display = 'flex';
+    document.getElementById('fp-error-txt').textContent = 'Nombre, presentación y precio son obligatorios';
+    return;
+  }
+  err.style.display = 'none';
+  const btn = document.getElementById('fp-btn-guardar');
+  btn.innerHTML = '<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Guardando...';
+  btn.disabled  = true;
+
+  try {
+    const data = { nombre, presentacion, precio, stock_actual: stock, stock_minimo: stockMin, categoria, activo: true };
+    if (_productoEditandoKey) {
+      await dbUpdate('vdl/productos/' + _productoEditandoKey, data);
+    } else {
+      await dbPush('vdl/productos', data);
+    }
+    ir('a-productos');
+  } catch(e) {
+    err.style.display = 'flex';
+    document.getElementById('fp-error-txt').textContent = 'Error al guardar: ' + e.message;
+  }
+  btn.innerHTML = '<i class="ti ti-check"></i> Guardar';
+  btn.disabled  = false;
+}
+window.guardarProducto = guardarProducto;
+
+async function toggleActivoProducto(key, estadoActual) {
+  const accion = estadoActual ? 'desactivar' : 'activar';
+  if (!confirm('¿Querés ' + accion + ' este producto?')) return;
+  try {
+    await dbUpdate('vdl/productos/' + key, { activo: !estadoActual });
+    cargarAdminProductos();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+window.toggleActivoProducto = toggleActivoProducto;
 
 // ── Detalle pedido ───────────────────────────────────────────
 let _detallePedidoOrigenScreen = 's-pedidos';
