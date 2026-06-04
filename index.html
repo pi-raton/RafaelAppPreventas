@@ -231,9 +231,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--azul);}
 <!-- CLIENTES -->
 <div id="s-clientes" class="screen">
   <div class="topbar">
-    <div class="topbar-row">
-      <button class="back" onclick="irAtras()"><i class="ti ti-arrow-left"></i></button>
-      <div><h1>Seleccionar Cliente</h1><p>Nuevo pedido</p></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="topbar-row">
+        <button class="back" onclick="irAtras()"><i class="ti ti-arrow-left"></i></button>
+        <div><h1>Seleccionar Cliente</h1><p>Nuevo pedido</p></div>
+      </div>
+      <button onclick="abrirFormNuevoCliente()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;">+ Nuevo</button>
     </div>
   </div>
   <div class="scroll">
@@ -246,6 +249,26 @@ input:focus,select:focus,textarea:focus{border-color:var(--azul);}
     <button class="nav-btn" onclick="ir('s-productos-lista')"><i class="ti ti-package"></i>Productos</button>
     <button class="nav-btn active" onclick="ir('s-clientes')"><i class="ti ti-users"></i>Clientes</button>
   </nav>
+</div>
+
+<!-- NUEVO CLIENTE (preventista) -->
+<div id="s-nuevo-cliente" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="ir('s-clientes')"><i class="ti ti-arrow-left"></i></button>
+      <div><h1>Nuevo Cliente</h1><p>Alta rápida</p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="card">
+      <div class="field"><label class="lbl">Nombre *</label><input type="text" id="nc-nombre" placeholder="Ej: Farmacia San Martín"></div>
+      <div class="field"><label class="lbl">Dirección</label><input type="text" id="nc-direccion" placeholder="Ej: Av. Corrientes 1234"></div>
+      <div class="field"><label class="lbl">Teléfono</label><input type="tel" id="nc-telefono" placeholder="Ej: 341-4001234"></div>
+      <div id="nc-error" class="alert-box alert-danger" style="display:none;"><i class="ti ti-alert-circle"></i><span id="nc-error-txt"></span></div>
+      <button class="btn btn-primary" id="nc-btn-guardar" onclick="guardarNuevoCliente()"><i class="ti ti-check"></i> Guardar y seleccionar</button>
+      <button class="btn btn-secondary" onclick="ir('s-clientes')"><i class="ti ti-arrow-left"></i> Cancelar</button>
+    </div>
+  </div>
 </div>
 
 <!-- CATÁLOGO -->
@@ -1417,6 +1440,51 @@ async function ajustarStock(key, delta, btn) {
   try { await dbUpdate('vdl/productos/' + key, { stock_actual: nuevo }); } catch(e) {}
 }
 window.ajustarStock = ajustarStock;
+
+function abrirFormNuevoCliente() {
+  document.getElementById('nc-nombre').value    = '';
+  document.getElementById('nc-direccion').value = '';
+  document.getElementById('nc-telefono').value  = '';
+  document.getElementById('nc-error').style.display = 'none';
+  ir('s-nuevo-cliente');
+}
+window.abrirFormNuevoCliente = abrirFormNuevoCliente;
+
+async function guardarNuevoCliente() {
+  const nombre    = document.getElementById('nc-nombre').value.trim();
+  const direccion = document.getElementById('nc-direccion').value.trim();
+  const telefono  = document.getElementById('nc-telefono').value.trim();
+  const err       = document.getElementById('nc-error');
+
+  if (!nombre) {
+    err.style.display = 'flex';
+    document.getElementById('nc-error-txt').textContent = 'El nombre es obligatorio';
+    return;
+  }
+  err.style.display = 'none';
+  const btn = document.getElementById('nc-btn-guardar');
+  btn.innerHTML = '<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Guardando...';
+  btn.disabled  = true;
+
+  try {
+    const data = { nombre, direccion, telefono, email: '', activo: true };
+    const key  = await dbPush('vdl/clientes', data);
+    // Crear CC en $0
+    await dbSet('vdl/cuentas_corrientes/' + key, {
+      id_cliente: key, nombre, saldo_deudor: 0,
+      limite: 1000000, disponible: 1000000, estado: 'AL DÍA'
+    });
+    // Recargar clientes y seleccionar el nuevo directamente
+    await cargarClientes();
+    await seleccionarCliente(key);
+  } catch(e) {
+    err.style.display = 'flex';
+    document.getElementById('nc-error-txt').textContent = 'Error al guardar: ' + e.message;
+    btn.innerHTML = '<i class="ti ti-check"></i> Guardar y seleccionar';
+    btn.disabled  = false;
+  }
+}
+window.guardarNuevoCliente = guardarNuevoCliente;
 
 // ── ABM Clientes ─────────────────────────────────────────────
 let _todosClientesAdmin = [];
