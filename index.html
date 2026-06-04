@@ -1042,22 +1042,49 @@ async function cargarPedidos() {
     const data = await dbGet('vdl/pedidos');
     let pedidos = objToArray(data);
     if (usuario.rol !== 'ADMIN') pedidos = pedidos.filter(p => p.id_usuario === usuario._key);
-    pedidos = pedidos.reverse();
     if (!pedidos.length) { cont.innerHTML = '<div class="empty"><i class="ti ti-list"></i><p>Sin pedidos</p></div>'; return; }
-    cont.innerHTML = pedidos.map((p,i) => `
-      <div class="list-item" style="padding:10px 0;" onclick="verDetallePedido('${p._key}','s-pedidos')">
-        <div class="li-left">
-          <div class="avatar ${['av-az','av-gr','av-am','av-ro'][i%4]}">${iniciales(p.nombre_cliente)}</div>
-          <div>
-            <div class="li-name">${p.nombre_cliente}</div>
-            <div class="li-sub">${p.fecha} · ${p.nombre_vendedor}</div>
-          </div>
+
+    // Agrupar por fecha
+    const porDia = {};
+    pedidos.forEach(p => {
+      const fecha = p.fecha || 'Sin fecha';
+      if (!porDia[fecha]) porDia[fecha] = [];
+      porDia[fecha].push(p);
+    });
+
+    // Ordenar días más reciente primero
+    const diasOrdenados = Object.keys(porDia).sort((a, b) => {
+      const parseFecha = f => { const [d,m,y] = f.split('/'); return new Date(y,m-1,d); };
+      return parseFecha(b) - parseFecha(a);
+    });
+
+    let html = '';
+    diasOrdenados.forEach(fecha => {
+      const pedsDia = porDia[fecha];
+      const totalDia = pedsDia.reduce((s,p) => s + Number(p.total||0), 0);
+      html += `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px;">
+          <div class="divider" style="margin:0;">${fecha}</div>
+          <div style="font-size:12px;font-weight:800;color:var(--azul-osc);">${formatPesos(totalDia)}</div>
         </div>
-        <div class="li-right">
-          <div class="li-price">${formatPesos(Number(p.total))}</div>
-          <span class="badge ${badgeFormaPago(p.forma_pago)}">${formatFormaPago(p.forma_pago)}</span>
-        </div>
-      </div>`).join('');
+        <div class="card" style="padding:8px 14px;margin-bottom:4px;">
+          ${pedsDia.map((p,i) => `
+            <div class="list-item" style="padding:10px 0;" onclick="verDetallePedido('${p._key}','s-pedidos')">
+              <div class="li-left">
+                <div class="avatar ${['av-az','av-gr','av-am','av-ro'][i%4]}">${iniciales(p.nombre_cliente)}</div>
+                <div>
+                  <div class="li-name">${p.nombre_cliente}</div>
+                  <div class="li-sub">${p.nombre_vendedor}</div>
+                </div>
+              </div>
+              <div class="li-right">
+                <div class="li-price">${formatPesos(Number(p.total))}</div>
+                <span class="badge ${badgeFormaPago(p.forma_pago)}">${formatFormaPago(p.forma_pago)}</span>
+              </div>
+            </div>`).join('')}
+        </div>`;
+    });
+    cont.innerHTML = html;
   } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error</p></div>'; }
 }
 
@@ -1154,22 +1181,50 @@ async function cargarAdminPedidos() {
   cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
   try {
     const data = await dbGet('vdl/pedidos');
-    const pedidos = objToArray(data).reverse();
+    const pedidos = objToArray(data);
     if (!pedidos.length) { cont.innerHTML = '<div class="empty"><i class="ti ti-list"></i><p>Sin pedidos</p></div>'; return; }
-    cont.innerHTML = pedidos.map((p,i) => `
-      <div class="list-item" style="padding:10px 0;" onclick="verDetallePedido('${p._key}','a-pedidos')">
-        <div class="li-left">
-          <div class="avatar ${['av-az','av-gr','av-am','av-ro'][i%4]}">${iniciales(p.nombre_cliente)}</div>
-          <div>
-            <div class="li-name">${p.nombre_cliente}</div>
-            <div class="li-sub">${p.fecha} · ${p.nombre_vendedor}</div>
-          </div>
+
+    // Agrupar por fecha
+    const porDia = {};
+    pedidos.forEach(p => {
+      const fecha = p.fecha || 'Sin fecha';
+      if (!porDia[fecha]) porDia[fecha] = [];
+      porDia[fecha].push(p);
+    });
+
+    // Ordenar días más reciente primero
+    const diasOrdenados = Object.keys(porDia).sort((a, b) => {
+      const parseFecha = f => { const [d,m,y] = f.split('/'); return new Date(y,m-1,d); };
+      return parseFecha(b) - parseFecha(a);
+    });
+
+    let html = '';
+    diasOrdenados.forEach(fecha => {
+      const pedsDia  = porDia[fecha];
+      const totalDia = pedsDia.reduce((s,p) => s + Number(p.total||0), 0);
+      html += `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px;">
+          <div class="divider" style="margin:0;">${fecha}</div>
+          <div style="font-size:12px;font-weight:800;color:var(--azul-osc);">${formatPesos(totalDia)}</div>
         </div>
-        <div class="li-right">
-          <div class="li-price">${formatPesos(Number(p.total))}</div>
-          <span class="badge ${badgeFormaPago(p.forma_pago)}">${formatFormaPago(p.forma_pago)}</span>
-        </div>
-      </div>`).join('');
+        <div class="card" style="padding:8px 14px;margin-bottom:4px;">
+          ${pedsDia.map((p,i) => `
+            <div class="list-item" style="padding:10px 0;" onclick="verDetallePedido('${p._key}','a-pedidos')">
+              <div class="li-left">
+                <div class="avatar ${['av-az','av-gr','av-am','av-ro'][i%4]}">${iniciales(p.nombre_cliente)}</div>
+                <div>
+                  <div class="li-name">${p.nombre_cliente}</div>
+                  <div class="li-sub">${p.nombre_vendedor}</div>
+                </div>
+              </div>
+              <div class="li-right">
+                <div class="li-price">${formatPesos(Number(p.total))}</div>
+                <span class="badge ${badgeFormaPago(p.forma_pago)}">${formatFormaPago(p.forma_pago)}</span>
+              </div>
+            </div>`).join('')}
+        </div>`;
+    });
+    cont.innerHTML = html;
   } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error</p></div>'; }
 }
 
