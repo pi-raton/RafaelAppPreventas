@@ -437,6 +437,21 @@ input:focus,select:focus,textarea:focus{border-color:var(--azul);}
   </nav>
 </div>
 
+<!-- DETALLE PEDIDO (compartido admin y preventista) -->
+<div id="s-detalle-pedido" class="screen">
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back" onclick="volverDesdePedido()"><i class="ti ti-arrow-left"></i></button>
+      <div><h1 id="detalle-titulo">Pedido</h1><p id="detalle-sub"></p></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div id="detalle-contenido"><div class="spinner"><i class="ti ti-loader"></i></div></div>
+    <button class="btn btn-wa" onclick="compartirPedidoWA()"><i class="ti ti-brand-whatsapp"></i> Compartir por WhatsApp</button>
+    <button class="btn btn-secondary" onclick="volverDesdePedido()"><i class="ti ti-arrow-left"></i> Volver</button>
+  </div>
+</div>
+
 <!-- ADMIN CC -->
 <div id="a-cc" class="screen">
   <div class="topbar"><h1>Cuentas Corrientes</h1></div>
@@ -979,7 +994,7 @@ async function cargarPedidos() {
     pedidos = pedidos.reverse();
     if (!pedidos.length) { cont.innerHTML = '<div class="empty"><i class="ti ti-list"></i><p>Sin pedidos</p></div>'; return; }
     cont.innerHTML = pedidos.map((p,i) => `
-      <div class="list-item" style="padding:10px 0;">
+      <div class="list-item" style="padding:10px 0;" onclick="verDetallePedido('${p._key}','s-pedidos')">
         <div class="li-left">
           <div class="avatar ${['av-az','av-gr','av-am','av-ro'][i%4]}">${iniciales(p.nombre_cliente)}</div>
           <div>
@@ -1090,7 +1105,7 @@ async function cargarAdminPedidos() {
     const pedidos = objToArray(data).reverse();
     if (!pedidos.length) { cont.innerHTML = '<div class="empty"><i class="ti ti-list"></i><p>Sin pedidos</p></div>'; return; }
     cont.innerHTML = pedidos.map((p,i) => `
-      <div class="list-item" style="padding:10px 0;">
+      <div class="list-item" style="padding:10px 0;" onclick="verDetallePedido('${p._key}','a-pedidos')">
         <div class="li-left">
           <div class="avatar ${['av-az','av-gr','av-am','av-ro'][i%4]}">${iniciales(p.nombre_cliente)}</div>
           <div>
@@ -1247,6 +1262,82 @@ async function ajustarStock(key, delta, btn) {
   try { await dbUpdate('vdl/productos/' + key, { stock_actual: nuevo }); } catch(e) {}
 }
 window.ajustarStock = ajustarStock;
+
+// ── Detalle pedido ───────────────────────────────────────────
+let _detallePedidoOrigenScreen = 's-pedidos';
+let _detallePedidoActual = null;
+
+async function verDetallePedido(key, origenScreen) {
+  _detallePedidoOrigenScreen = origenScreen;
+  const cont = document.getElementById('detalle-contenido');
+  cont.innerHTML = '<div class="spinner"><i class="ti ti-loader"></i></div>';
+  ir('s-detalle-pedido');
+  try {
+    const p = await dbGet('vdl/pedidos/' + key);
+    _detallePedidoActual = p;
+    document.getElementById('detalle-titulo').textContent = p.nombre_cliente;
+    document.getElementById('detalle-sub').textContent = p.fecha + ' · ' + formatFormaPago(p.forma_pago);
+
+    const items = p.items ? Object.values(p.items) : [];
+    cont.innerHTML = `
+      <div class="card">
+        <div class="card-title">Info del pedido</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:12px;color:var(--gris-6)">Vendedor</span>
+          <span style="font-weight:600">${p.nombre_vendedor}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:12px;color:var(--gris-6)">Fecha</span>
+          <span style="font-weight:600">${p.fecha}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:12px;color:var(--gris-6)">Pago</span>
+          <span class="badge ${badgeFormaPago(p.forma_pago)}">${formatFormaPago(p.forma_pago)}</span>
+        </div>
+        ${p.observaciones ? `<div style="display:flex;justify-content:space-between;">
+          <span style="font-size:12px;color:var(--gris-6)">Obs.</span>
+          <span style="font-size:12px;color:var(--gris-6);text-align:right;max-width:200px;">${p.observaciones}</span>
+        </div>` : ''}
+      </div>
+      <div class="card">
+        <div class="card-title">Productos (${items.length})</div>
+        ${items.map(it => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gris-2);">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;">${it.nombre}</div>
+              <div style="font-size:11px;color:var(--gris-5);">${it.presentacion} · ${formatPesos(it.precio_unit)} c/u</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;margin-left:10px;">
+              <div style="font-size:13px;font-weight:700;">${formatPesos(it.subtotal)}</div>
+              <div style="font-size:11px;color:var(--gris-5);">x${it.cantidad}</div>
+            </div>
+          </div>`).join('')}
+        <div style="display:flex;justify-content:space-between;padding-top:10px;margin-top:4px;">
+          <span style="font-size:15px;font-weight:800;">Total</span>
+          <span style="font-size:15px;font-weight:800;color:var(--azul-osc);">${formatPesos(Number(p.total))}</span>
+        </div>
+      </div>`;
+  } catch(e) { cont.innerHTML = '<div class="empty"><i class="ti ti-alert-circle"></i><p>Error al cargar</p></div>'; }
+}
+window.verDetallePedido = verDetallePedido;
+
+function volverDesdePedido() {
+  ir(_detallePedidoOrigenScreen);
+}
+window.volverDesdePedido = volverDesdePedido;
+
+function compartirPedidoWA() {
+  const p = _detallePedidoActual;
+  if (!p) return;
+  const items = p.items ? Object.values(p.items) : [];
+  let txt = `*VDL DISTRIBUIDORA*\n_Pedido confirmado_\n——————————————\n`;
+  txt += `📅 ${p.fecha}\n👤 Vendedor: ${p.nombre_vendedor}\n\n`;
+  txt += `*CLIENTE*\n${p.nombre_cliente}\n\n*DETALLE*\n`;
+  items.forEach(i => { txt += `${i.nombre} ${i.presentacion}\n  ${i.cantidad} u. x ${formatPesos(i.precio_unit)} = *${formatPesos(i.subtotal)}*\n\n`; });
+  txt += `——————————————\n💳 Pago: ${formatFormaPago(p.forma_pago)}\n*TOTAL: ${formatPesos(Number(p.total))}*`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(txt));
+}
+window.compartirPedidoWA = compartirPedidoWA;
 
 // ── Helpers ──────────────────────────────────────────────────
 function formatPesos(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
